@@ -1,13 +1,13 @@
 {
   "delegatedTenants": [
     {
-      "tenantId": "84f1e4ea-8554-43e1-8709-f0b8589ea118",
-      "tenantName": "Pluralsight Sandbox",
-      "subscriptionId": "28e1e42a-4438-4c30-9a5f-7d7b488fd883",
-      "resourceGroup": "1-edee54f1-playground-sandbox",
-      "workspaceName": "sentinel-multitentnat",
+      "tenantId": "dcfeeacc-5825-4e13-8238-d7b052837b25",
+      "tenantName": "6DG Cyber Development",
+      "subscriptionId": "7d727b43-c480-4637-9b2d-f53db5982220",
+      "resourceGroup": "autorg1",
+      "workspaceName": "AutoLAW",
       "enabled": true,
-      "description": "Temporary Pluralsight sandbox - pull incidents from here before expiry"
+      "description": "First delegated customer tenant"
     }
   ],
   "mainTenant": {
@@ -15,7 +15,8 @@
     "subscriptionId": "7d727b43-c480-4637-9b2d-f53db5982220",
     "resourceGroup": "rg-uks-sentinel",
     "workspaceName": "logs-uks-sentinel"
-  },
+  }
+}
   "deploymentInfo": {
     "scenario": "Sandbox to Production Testing",
     "description": "This configuration pulls incidents from a temporary Pluralsight Azure sandbox into a permanent 6DG Cyber Development tenant. The Logic App runs in the 6DG tenant to ensure it survives after the sandbox expires.",

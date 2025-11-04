@@ -13,6 +13,11 @@
     "azuremonitorlogs": {
       "connectionId": "",
       "connectionName": "loganalytics-query",
+      "connectionProperties": {
+        "authentication": {
+          "type": "ManagedServiceIdentity"
+        }
+      },
       "id": "/subscriptions/{subscriptionId}/providers/Microsoft.Web/locations/{location}/managedApis/azuremonitorlogs"
     }
   }

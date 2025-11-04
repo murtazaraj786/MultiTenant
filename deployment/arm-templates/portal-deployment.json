@@ -255,7 +255,7 @@
                       "runAfter": {},
                       "type": "ApiConnection",
                       "inputs": {
-                        "body": "SecurityIncident\n| where TimeGenerated >= datetime(@{variables('lookbackTime')})\n| where Status in ('New', 'Active')\n| project IncidentNumber, Title, Description, Severity, Status, Owner, Classification, ClassificationComment, ClassificationReason, ProviderName, ProviderIncidentId, FirstActivityTime, LastActivityTime, LastModifiedTime, CreatedTime, AlertsCount, BookmarksCount, CommentsCount, Labels, Tactics, Techniques, AdditionalData, IncidentUrl",
+                        "body": "SecurityIncident\n| where TimeGenerated >= datetime(@{variables('lookbackTime')})\n| where Status in ('New', 'Active')\n| project IncidentNumber, Title, Description, Severity, Status, TimeGenerated, CreatedTime, LastModifiedTime",
                         "host": {
                           "connection": {
                             "name": "@parameters('$connections')['azuremonitorlogs']['connectionId']"
@@ -461,6 +461,11 @@
               "azuremonitorlogs": {
                 "connectionId": "[resourceId('Microsoft.Web/connections', variables('logAnalyticsConnectionName'))]",
                 "connectionName": "[variables('logAnalyticsConnectionName')]",
+                "connectionProperties": {
+                  "authentication": {
+                    "type": "ManagedServiceIdentity"
+                  }
+                },
                 "id": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', parameters('location'), 'azuremonitorlogs')]"
               }
             }

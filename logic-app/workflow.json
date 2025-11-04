@@ -80,7 +80,7 @@
                   }
                 },
                 "method": "post",
-                "body": "SecurityIncident\n| where TimeGenerated > ago(@{parameters('lookbackMinutes')}m)\n| where Status in ('New', 'Active')\n| project IncidentNumber, Title, Severity, Status, CreatedTime, LastModifiedTime, Owner, Description, ProviderName, AdditionalData, Labels, TenantId, _ResourceId\n| order by CreatedTime desc",
+                "body": "SecurityIncident\n| where TimeGenerated > ago(@{parameters('lookbackMinutes')}m)\n| where Status in ('New', 'Active')\n| project IncidentNumber, Title, Description, Severity, Status, TimeGenerated, CreatedTime, LastModifiedTime\n| order by CreatedTime desc",
                 "path": "/queryData",
                 "queries": {
                   "subscriptions": "@items('For_Each_Delegated_Tenant')?['subscriptionId']",

@@ -83,7 +83,7 @@
                                 "runAfter": {},
                                 "type": "ApiConnection",
                                 "inputs": {
-                                    "body": "SecurityIncident\n| where TimeGenerated >= datetime(@{variables('lookbackTime')})\n| where Status in ('New', 'Active')\n| project IncidentNumber, Title, Description, Severity, Status, Owner, Classification, ClassificationComment, ClassificationReason, ProviderName, ProviderIncidentId, FirstActivityTime, LastActivityTime, LastModifiedTime, CreatedTime, AlertsCount, BookmarksCount, CommentsCount, Labels, Tactics, Techniques, AdditionalData, IncidentUrl",
+                                    "body": "SecurityIncident\n| where TimeGenerated >= datetime(@{variables('lookbackTime')})\n| where Status in ('New', 'Active')\n| project IncidentNumber, Title, Description, Severity, Status, TimeGenerated, CreatedTime, LastModifiedTime",
                                     "host": {
                                         "connection": {
                                             "name": "@parameters('$connections')['azuremonitorlogs']['connectionId']"
@@ -153,7 +153,7 @@
                                                         }
                                                     },
                                                     "method": "put",
-                                                    "path": "/Incidents/subscriptions/@{encodeURIComponent(outputs('Get_Delegated_Tenants_Config')['mainTenant']['subscriptionId'])}/resourceGroups/@{encodeURIComponent(outputs('Get_Delegated_Tenants_Config')['mainTenant']['resourceGroup'])}/workspaces/@{encodeURIComponent(outputs('Get_Delegated_Tenants_Config')['mainTenant']['workspaceName'])}"
+                                                    "path": "/Incidents"
                                                 }
                                             },
                                             "Increment_Synced_Counter": {
@@ -191,7 +191,7 @@
                                                             }
                                                         },
                                                         "method": "put",
-                                                        "path": "/Incidents/subscriptions/@{encodeURIComponent(outputs('Get_Delegated_Tenants_Config')['mainTenant']['subscriptionId'])}/resourceGroups/@{encodeURIComponent(outputs('Get_Delegated_Tenants_Config')['mainTenant']['resourceGroup'])}/workspaces/@{encodeURIComponent(outputs('Get_Delegated_Tenants_Config')['mainTenant']['workspaceName'])}"
+                                                        "path": "/Incidents"
                                                     },
                                                     "description": "Update existing incident with latest status and classification"
                                                 }
@@ -304,7 +304,12 @@
                 "azuremonitorlogs": {
                     "id": "/subscriptions/28e1e42a-4438-4c30-9a5f-7d7b488fd883/providers/Microsoft.Web/locations/westus/managedApis/azuremonitorlogs",
                     "connectionId": "/subscriptions/28e1e42a-4438-4c30-9a5f-7d7b488fd883/resourceGroups/1-edee54f1-playground-sandbox/providers/Microsoft.Web/connections/loganalytics-query",
-                    "connectionName": "loganalytics-query"
+                    "connectionName": "loganalytics-query",
+                    "connectionProperties": {
+                        "authentication": {
+                            "type": "ManagedServiceIdentity"
+                        }
+                    }
                 }
             }
         }

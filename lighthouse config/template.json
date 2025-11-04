@@ -7,24 +7,34 @@
    "metadata": {
     "description": "Specify a unique name for your offer"
    },
-   "defaultValue": "testing"
+   "defaultValue": "testinglogicapp"
   },
   "mspOfferDescription": {
    "type": "string",
    "metadata": {
     "description": "Name of the Managed Service Provider offering"
    },
-   "defaultValue": "testing"
+   "defaultValue": "testinglogicapp"
   }
  },
  "variables": {
   "mspRegistrationName": "[guid(parameters('mspOfferName'))]",
   "mspAssignmentName": "[guid(parameters('mspOfferName'))]",
-  "managedByTenantId": "84f1e4ea-8554-43e1-8709-f0b8589ea118",
+  "managedByTenantId": "dcfeeacc-5825-4e13-8238-d7b052837b25",
   "authorizations": [
    {
-    "principalId": "32a1f2a1-9ea3-4b31-b135-3af19aed5035",
+    "principalId": "d8532c2e-268c-407d-bad0-55e9bc26e7ff",
     "roleDefinitionId": "ab8e14d6-4a74-4a29-9ba8-549422addade",
+    "principalIdDisplayName": "sentinel-incident-sync"
+   },
+   {
+    "principalId": "d8532c2e-268c-407d-bad0-55e9bc26e7ff",
+    "roleDefinitionId": "3e150937-b8fe-4cfb-8069-0eaf05ecd056",
+    "principalIdDisplayName": "sentinel-incident-sync"
+   },
+   {
+    "principalId": "d8532c2e-268c-407d-bad0-55e9bc26e7ff",
+    "roleDefinitionId": "f4c81013-99ee-4d62-a7ee-b3f1f648599a",
     "principalIdDisplayName": "sentinel-incident-sync"
    }
   ]

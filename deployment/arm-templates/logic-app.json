@@ -209,7 +209,7 @@
                           }
                         },
                         "method": "post",
-                        "body": "SecurityIncident\n| where TimeGenerated > ago(@{parameters('lookbackMinutes')}m)\n| where Status in ('New', 'Active')\n| project IncidentNumber, Title, Severity, Status, CreatedTime, LastModifiedTime, Owner, Description, ProviderName, AdditionalData, Labels, TenantId, _ResourceId\n| order by CreatedTime desc",
+                        "body": "SecurityIncident\n| where TimeGenerated > ago(@{parameters('lookbackMinutes')}m)\n| where Status in ('New', 'Active')\n| project IncidentNumber, Title, Description, Severity, Status, TimeGenerated, CreatedTime, LastModifiedTime\n| order by CreatedTime desc",
                         "path": "/queryData",
                         "queries": {
                           "subscriptions": "@items('For_Each_Delegated_Tenant')?['subscriptionId']",
@@ -263,12 +263,10 @@
                                     },
                                     "method": "put",
                                     "body": {
-                                      "properties": {
-                                        "title": "@{items('For_Each_Delegated_Tenant')?['tenantId']}: @{items('For_Each_Incident')?['Title']}",
-                                        "description": "Source Tenant: @{items('For_Each_Delegated_Tenant')?['tenantId']}\nOriginal Incident Number: @{items('For_Each_Incident')?['IncidentNumber']}\n\n@{items('For_Each_Incident')?['Description']}",
-                                        "severity": "@items('For_Each_Incident')?['Severity']",
-                                        "status": "@items('For_Each_Incident')?['Status']"
-                                      }
+                                      "title": "@{items('For_Each_Delegated_Tenant')?['tenantId']}: @{items('For_Each_Incident')?['Title']}",
+                                      "description": "Source Tenant: @{items('For_Each_Delegated_Tenant')?['tenantId']}\nOriginal Incident Number: @{items('For_Each_Incident')?['IncidentNumber']}\n\n@{items('For_Each_Incident')?['Description']}",
+                                      "severity": "@items('For_Each_Incident')?['Severity']",
+                                      "status": "@items('For_Each_Incident')?['Status']"
                                     },
                                     "path": "/Incidents/subscriptions/@{encodeURIComponent(parameters('mainWorkspaceId'))}/incidents/@{encodeURIComponent(first(body('Filter_Existing_Incident'))?['name'])}"
                                   }
@@ -292,17 +290,10 @@
                                       },
                                       "method": "put",
                                       "body": {
-                                        "properties": {
-                                          "title": "@{items('For_Each_Delegated_Tenant')?['tenantId']}: @{items('For_Each_Incident')?['Title']}",
-                                          "description": "Source Tenant: @{items('For_Each_Delegated_Tenant')?['tenantId']}\nOriginal Incident Number: @{items('For_Each_Incident')?['IncidentNumber']}\n\n@{items('For_Each_Incident')?['Description']}",
-                                          "severity": "@items('For_Each_Incident')?['Severity']",
-                                          "status": "@items('For_Each_Incident')?['Status']",
-                                          "additionalData": {
-                                            "sourceIncidentId": "@{items('For_Each_Delegated_Tenant')?['tenantId']}-@{items('For_Each_Incident')?['IncidentNumber']}",
-                                            "sourceTenantId": "@{items('For_Each_Delegated_Tenant')?['tenantId']}",
-                                            "sourceWorkspace": "@{items('For_Each_Delegated_Tenant')?['workspaceName']}"
-                                          }
-                                        }
+                                        "title": "@{items('For_Each_Delegated_Tenant')?['tenantId']}: @{items('For_Each_Incident')?['Title']}",
+                                        "description": "Source Tenant: @{items('For_Each_Delegated_Tenant')?['tenantId']}\nOriginal Incident Number: @{items('For_Each_Incident')?['IncidentNumber']}\n\n@{items('For_Each_Incident')?['Description']}",
+                                        "severity": "@items('For_Each_Incident')?['Severity']",
+                                        "status": "@items('For_Each_Incident')?['Status']"
                                       },
                                       "path": "/Incidents/subscriptions/@{encodeURIComponent(parameters('mainWorkspaceId'))}"
                                     }
@@ -433,6 +424,11 @@
               "azuremonitorlogs": {
                 "connectionId": "[resourceId('Microsoft.Web/connections', variables('logAnalyticsConnectionName'))]",
                 "connectionName": "[variables('logAnalyticsConnectionName')]",
+                "connectionProperties": {
+                  "authentication": {
+                    "type": "ManagedServiceIdentity"
+                  }
+                },
                 "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', parameters('location'), '/managedApis/azuremonitorlogs')]"
               }
             }

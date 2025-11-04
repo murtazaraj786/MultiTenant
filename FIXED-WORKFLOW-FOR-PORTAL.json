@@ -56,23 +56,23 @@
                 "inputs": {
                     "delegatedTenants": [
                         {
-                            "tenantId": "dcfeeacc-5825-4e13-8238-d7b052837b25",
-                            "tenantName": "6DG Cyber Development",
-                            "subscriptionId": "7d727b43-c480-4637-9b2d-f53db5982220",
-                            "resourceGroup": "rg-uks-sentinel",
-                            "workspaceName": "logs-uks-sentinel",
+                            "tenantId": "REPLACE-WITH-TENANT-ID",
+                            "tenantName": "REPLACE-WITH-TENANT-NAME",
+                            "subscriptionId": "REPLACE-WITH-SUBSCRIPTION-ID",
+                            "resourceGroup": "REPLACE-WITH-RESOURCE-GROUP",
+                            "workspaceName": "REPLACE-WITH-WORKSPACE-NAME",
                             "enabled": true,
-                            "description": "6DG Cyber Development tenant"
+                            "description": "Source Sentinel workspace"
                         }
                     ],
                     "mainTenant": {
-                        "tenantId": "84f1e4ea-8554-43e1-8709-f0b8589ea118",
-                        "subscriptionId": "28e1e42a-4438-4c30-9a5f-7d7b488fd883",
-                        "resourceGroup": "1-edee54f1-playground-sandbox",
-                        "workspaceName": "sentinel-multitentnat"
+                        "tenantId": "dcfeeacc-5825-4e13-8238-d7b052837b25",
+                        "subscriptionId": "7d727b43-c480-4637-9b2d-f53db5982220",
+                        "resourceGroup": "rg-uks-sentinel",
+                        "workspaceName": "logs-uks-sentinel"
                     }
                 },
-                "description": "Tenant configuration - Update this with your delegated tenants from config/tenants.json"
+                "description": "TWO WORKSPACE TEST - AutoLAW (source) to logs-uks-sentinel (destination)"
             },
             "For_Each_Delegated_Tenant": {
                 "foreach": "@outputs('Get_Delegated_Tenants_Config')['delegatedTenants']",
@@ -274,7 +274,7 @@
         "outputs": {},
         "parameters": {
             "mainWorkspaceId": {
-                "defaultValue": "/subscriptions/28e1e42a-4438-4c30-9a5f-7d7b488fd883/resourceGroups/1-edee54f1-playground-sandbox/providers/Microsoft.OperationalInsights/workspaces/sentinel-multitentnat",
+                "defaultValue": "/subscriptions/7d727b43-c480-4637-9b2d-f53db5982220/resourceGroups/rg-uks-sentinel/providers/Microsoft.OperationalInsights/workspaces/logs-uks-sentinel",
                 "type": "String"
             },
             "lookbackMinutes": {
@@ -292,8 +292,8 @@
             "type": "Object",
             "value": {
                 "azuresentinel": {
-                    "id": "/subscriptions/28e1e42a-4438-4c30-9a5f-7d7b488fd883/providers/Microsoft.Web/locations/westus/managedApis/azuresentinel",
-                    "connectionId": "/subscriptions/28e1e42a-4438-4c30-9a5f-7d7b488fd883/resourceGroups/1-edee54f1-playground-sandbox/providers/Microsoft.Web/connections/azuresentinel",
+                    "id": "/subscriptions/7d727b43-c480-4637-9b2d-f53db5982220/providers/Microsoft.Web/locations/uksouth/managedApis/azuresentinel",
+                    "connectionId": "/subscriptions/7d727b43-c480-4637-9b2d-f53db5982220/resourceGroups/rg-sentinel-sync/providers/Microsoft.Web/connections/azuresentinel",
                     "connectionName": "azuresentinel",
                     "connectionProperties": {
                         "authentication": {
@@ -302,8 +302,8 @@
                     }
                 },
                 "azuremonitorlogs": {
-                    "id": "/subscriptions/28e1e42a-4438-4c30-9a5f-7d7b488fd883/providers/Microsoft.Web/locations/westus/managedApis/azuremonitorlogs",
-                    "connectionId": "/subscriptions/28e1e42a-4438-4c30-9a5f-7d7b488fd883/resourceGroups/1-edee54f1-playground-sandbox/providers/Microsoft.Web/connections/loganalytics-query",
+                    "id": "/subscriptions/7d727b43-c480-4637-9b2d-f53db5982220/providers/Microsoft.Web/locations/uksouth/managedApis/azuremonitorlogs",
+                    "connectionId": "/subscriptions/7d727b43-c480-4637-9b2d-f53db5982220/resourceGroups/rg-sentinel-sync/providers/Microsoft.Web/connections/loganalytics-query",
                     "connectionName": "loganalytics-query",
                     "connectionProperties": {
                         "authentication": {

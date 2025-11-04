@@ -461,11 +461,6 @@
               "azuremonitorlogs": {
                 "connectionId": "[resourceId('Microsoft.Web/connections', variables('logAnalyticsConnectionName'))]",
                 "connectionName": "[variables('logAnalyticsConnectionName')]",
-                "connectionProperties": {
-                  "authentication": {
-                    "type": "ManagedServiceIdentity"
-                  }
-                },
                 "id": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', parameters('location'), 'azuremonitorlogs')]"
               }
             }

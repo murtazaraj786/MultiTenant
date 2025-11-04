@@ -161,7 +161,7 @@
                 "variables": [
                   {
                     "name": "lookbackTime",
-                    "type": "string",
+                    "type": "String",
                     "value": "@{addMinutes(utcNow(), mul(parameters('lookbackMinutes'), -1))}"
                   }
                 ]
@@ -178,7 +178,7 @@
                 "variables": [
                   {
                     "name": "ProcessedCount",
-                    "type": "integer",
+                    "type": "Integer",
                     "value": 0
                   }
                 ]
@@ -195,7 +195,7 @@
                 "variables": [
                   {
                     "name": "ErrorCount",
-                    "type": "integer",
+                    "type": "Integer",
                     "value": 0
                   }
                 ]
@@ -212,7 +212,7 @@
                 "variables": [
                   {
                     "name": "syncedCount",
-                    "type": "integer",
+                    "type": "Integer",
                     "value": 0
                   }
                 ]
@@ -228,18 +228,18 @@
               "inputs": {
                 "delegatedTenants": [
                   {
-                    "tenantId": "REPLACE-WITH-CUSTOMER-TENANT-ID",
+                    "tenantId": "tenant1-id",
                     "tenantName": "Tenant 1",
-                    "subscriptionId": "REPLACE-WITH-CUSTOMER-SUBSCRIPTION-ID",
-                    "resourceGroup": "REPLACE-WITH-CUSTOMER-RG",
-                    "workspaceName": "REPLACE-WITH-CUSTOMER-WORKSPACE",
+                    "subscriptionId": "subscription1-id",
+                    "resourceGroup": "rg-tenant1-sentinel",
+                    "workspaceName": "logs-tenant1-sentinel",
                     "enabled": true
                   }
                 ],
                 "mainTenant": {
-                  "subscriptionId": "[parameters('mainSubscriptionId')]",
-                  "resourceGroup": "[parameters('mainResourceGroup')]",
-                  "workspaceName": "[parameters('mainWorkspaceName')]"
+                  "subscriptionId": "[variables('mainSubscriptionId')]",
+                  "resourceGroup": "[variables('mainResourceGroup')]",
+                  "workspaceName": "[variables('mainWorkspaceName')]"
                 }
               },
               "description": "Load from Azure Key Vault or configuration file in production"
@@ -273,7 +273,7 @@
                       }
                     },
                     "For_Each_Incident": {
-                      "foreach": "@body('Query_Incidents_from_Delegated_Workspace')?['value']",
+                      "foreach": "@body('Query_Delegated_Sentinel_Incidents')?['value']",
                       "actions": {
                         "Try_Create_Or_Update_Incident": {
                           "actions": {
@@ -402,7 +402,7 @@
                         }
                       },
                       "runAfter": {
-                        "Query_Incidents_from_Delegated_Workspace": [
+                        "Query_Delegated_Sentinel_Incidents": [
                           "Succeeded"
                         ]
                       },

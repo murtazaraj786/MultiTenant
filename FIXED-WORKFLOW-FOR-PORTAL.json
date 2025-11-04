@@ -1,0 +1,312 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "contentVersion": "1.0.0.0",
+        "triggers": {
+            "Recurrence": {
+                "recurrence": {
+                    "frequency": "Minute",
+                    "interval": 5
+                },
+                "evaluatedRecurrence": {
+                    "frequency": "Minute",
+                    "interval": 5
+                },
+                "type": "Recurrence"
+            }
+        },
+        "actions": {
+            "Initialize_Lookback_Time": {
+                "runAfter": {},
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "lookbackTime",
+                            "type": "string",
+                            "value": "@{addMinutes(utcNow(), mul(parameters('lookbackMinutes'), -1))}"
+                        }
+                    ]
+                }
+            },
+            "Initialize_Synced_Count": {
+                "runAfter": {
+                    "Initialize_Lookback_Time": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "syncedCount",
+                            "type": "integer",
+                            "value": 0
+                        }
+                    ]
+                }
+            },
+            "Get_Delegated_Tenants_Config": {
+                "runAfter": {
+                    "Initialize_Synced_Count": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Compose",
+                "inputs": {
+                    "delegatedTenants": [
+                        {
+                            "tenantId": "dcfeeacc-5825-4e13-8238-d7b052837b25",
+                            "tenantName": "6DG Cyber Development",
+                            "subscriptionId": "7d727b43-c480-4637-9b2d-f53db5982220",
+                            "resourceGroup": "rg-uks-sentinel",
+                            "workspaceName": "logs-uks-sentinel",
+                            "enabled": true,
+                            "description": "6DG Cyber Development tenant"
+                        }
+                    ],
+                    "mainTenant": {
+                        "tenantId": "84f1e4ea-8554-43e1-8709-f0b8589ea118",
+                        "subscriptionId": "28e1e42a-4438-4c30-9a5f-7d7b488fd883",
+                        "resourceGroup": "1-edee54f1-playground-sandbox",
+                        "workspaceName": "sentinel-multitentnat"
+                    }
+                },
+                "description": "Tenant configuration - Update this with your delegated tenants from config/tenants.json"
+            },
+            "For_Each_Delegated_Tenant": {
+                "foreach": "@outputs('Get_Delegated_Tenants_Config')['delegatedTenants']",
+                "actions": {
+                    "Condition_-_Check_Tenant_Enabled": {
+                        "actions": {
+                            "Query_Incidents_from_Delegated_Workspace": {
+                                "runAfter": {},
+                                "type": "ApiConnection",
+                                "inputs": {
+                                    "body": "SecurityIncident\n| where TimeGenerated >= datetime(@{variables('lookbackTime')})\n| where Status in ('New', 'Active')\n| project IncidentNumber, Title, Description, Severity, Status, Owner, Classification, ClassificationComment, ClassificationReason, ProviderName, ProviderIncidentId, FirstActivityTime, LastActivityTime, LastModifiedTime, CreatedTime, AlertsCount, BookmarksCount, CommentsCount, Labels, Tactics, Techniques, AdditionalData, IncidentUrl",
+                                    "host": {
+                                        "connection": {
+                                            "name": "@parameters('$connections')['azuremonitorlogs']['connectionId']"
+                                        }
+                                    },
+                                    "method": "post",
+                                    "path": "/queryData",
+                                    "queries": {
+                                        "resourcegroups": "@{items('For_Each_Delegated_Tenant')['resourceGroup']}",
+                                        "resourcename": "@{items('For_Each_Delegated_Tenant')['workspaceName']}",
+                                        "resourcetype": "Log Analytics Workspace",
+                                        "subscriptions": "@{items('For_Each_Delegated_Tenant')['subscriptionId']}",
+                                        "timerange": "Set in query"
+                                    }
+                                },
+                                "description": "Query SecurityIncident table from delegated Sentinel workspace"
+                            },
+                            "For_Each_Incident": {
+                                "foreach": "@body('Query_Incidents_from_Delegated_Workspace')?['value']",
+                                "actions": {
+                                    "Compose_Unique_Incident_ID": {
+                                        "runAfter": {},
+                                        "type": "Compose",
+                                        "inputs": "@{items('For_Each_Delegated_Tenant')['tenantId']}_@{items('For_Each_Incident')['IncidentNumber']}",
+                                        "description": "Create unique incident ID combining tenant ID and incident number"
+                                    },
+                                    "Check_if_Incident_Already_Exists": {
+                                        "runAfter": {
+                                            "Compose_Unique_Incident_ID": [
+                                                "Succeeded"
+                                            ]
+                                        },
+                                        "type": "ApiConnection",
+                                        "inputs": {
+                                            "host": {
+                                                "connection": {
+                                                    "name": "@parameters('$connections')['azuremonitorlogs']['connectionId']"
+                                                }
+                                            },
+                                            "method": "post",
+                                            "body": "SecurityIncident\n| where Title contains '@{outputs('Compose_Unique_Incident_ID')}'\n| take 1",
+                                            "path": "/queryData",
+                                            "queries": {
+                                                "resourcegroups": "@{outputs('Get_Delegated_Tenants_Config')['mainTenant']['resourceGroup']}",
+                                                "resourcename": "@{outputs('Get_Delegated_Tenants_Config')['mainTenant']['workspaceName']}",
+                                                "resourcetype": "Log Analytics Workspace",
+                                                "subscriptions": "@{outputs('Get_Delegated_Tenants_Config')['mainTenant']['subscriptionId']}",
+                                                "timerange": "Last 30 days"
+                                            }
+                                        }
+                                    },
+                                    "Condition_-_Create_or_Update": {
+                                        "actions": {
+                                            "Create_Incident_in_Main_Workspace": {
+                                                "runAfter": {},
+                                                "type": "ApiConnection",
+                                                "inputs": {
+                                                    "body": {
+                                                        "title": "[@{outputs('Compose_Unique_Incident_ID')}] @{items('For_Each_Incident')['Title']}",
+                                                        "description": "**Source Tenant:** @{items('For_Each_Delegated_Tenant')['tenantName']} (@{items('For_Each_Delegated_Tenant')['tenantId']})\n**Original Incident #:** @{items('For_Each_Incident')['IncidentNumber']}\n**Source Workspace:** @{items('For_Each_Delegated_Tenant')['workspaceName']}\n\n---\n\n@{items('For_Each_Incident')['Description']}",
+                                                        "severity": "@{items('For_Each_Incident')['Severity']}",
+                                                        "status": "@{items('For_Each_Incident')['Status']}"
+                                                    },
+                                                    "host": {
+                                                        "connection": {
+                                                            "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                                                        }
+                                                    },
+                                                    "method": "put",
+                                                    "path": "/Incidents/subscriptions/@{encodeURIComponent(outputs('Get_Delegated_Tenants_Config')['mainTenant']['subscriptionId'])}/resourceGroups/@{encodeURIComponent(outputs('Get_Delegated_Tenants_Config')['mainTenant']['resourceGroup'])}/workspaces/@{encodeURIComponent(outputs('Get_Delegated_Tenants_Config')['mainTenant']['workspaceName'])}"
+                                                }
+                                            },
+                                            "Increment_Synced_Counter": {
+                                                "runAfter": {
+                                                    "Create_Incident_in_Main_Workspace": [
+                                                        "Succeeded"
+                                                    ]
+                                                },
+                                                "type": "IncrementVariable",
+                                                "inputs": {
+                                                    "name": "syncedCount",
+                                                    "value": 1
+                                                }
+                                            }
+                                        },
+                                        "runAfter": {
+                                            "Check_if_Incident_Already_Exists": [
+                                                "Succeeded"
+                                            ]
+                                        },
+                                        "else": {
+                                            "actions": {
+                                                "Update_Existing_Incident": {
+                                                    "runAfter": {},
+                                                    "type": "ApiConnection",
+                                                    "inputs": {
+                                                        "body": {
+                                                            "title": "[@{outputs('Compose_Unique_Incident_ID')}] @{items('For_Each_Incident')['Title']}",
+                                                            "severity": "@{items('For_Each_Incident')['Severity']}",
+                                                            "status": "@{items('For_Each_Incident')['Status']}"
+                                                        },
+                                                        "host": {
+                                                            "connection": {
+                                                                "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                                                            }
+                                                        },
+                                                        "method": "put",
+                                                        "path": "/Incidents/subscriptions/@{encodeURIComponent(outputs('Get_Delegated_Tenants_Config')['mainTenant']['subscriptionId'])}/resourceGroups/@{encodeURIComponent(outputs('Get_Delegated_Tenants_Config')['mainTenant']['resourceGroup'])}/workspaces/@{encodeURIComponent(outputs('Get_Delegated_Tenants_Config')['mainTenant']['workspaceName'])}"
+                                                    },
+                                                    "description": "Update existing incident with latest status and classification"
+                                                }
+                                            }
+                                        },
+                                        "expression": {
+                                            "and": [
+                                                {
+                                                    "equals": [
+                                                        "@length(body('Check_if_Incident_Already_Exists')?['value'])",
+                                                        0
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "type": "If",
+                                        "description": "Check if incident count is 0 (doesn't exist) to create new, otherwise update"
+                                    }
+                                },
+                                "runAfter": {
+                                    "Query_Incidents_from_Delegated_Workspace": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "Foreach",
+                                "runtimeConfiguration": {
+                                    "concurrency": {
+                                        "repetitions": 1
+                                    }
+                                }
+                            }
+                        },
+                        "runAfter": {},
+                        "expression": {
+                            "and": [
+                                {
+                                    "equals": [
+                                        "@items('For_Each_Delegated_Tenant')['enabled']",
+                                        true
+                                    ]
+                                }
+                            ]
+                        },
+                        "type": "If"
+                    }
+                },
+                "runAfter": {
+                    "Get_Delegated_Tenants_Config": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Foreach",
+                "runtimeConfiguration": {
+                    "concurrency": {
+                        "repetitions": 1
+                    }
+                }
+            },
+            "Compose_Summary": {
+                "runAfter": {
+                    "For_Each_Delegated_Tenant": [
+                        "Succeeded",
+                        "Failed",
+                        "Skipped",
+                        "TimedOut"
+                    ]
+                },
+                "type": "Compose",
+                "inputs": {
+                    "runId": "@{workflow()['run']['name']}",
+                    "startTime": "@{workflow()['run']['startTime']}",
+                    "status": "@{workflow()['run']['status']}",
+                    "incidentsSynced": "@{variables('syncedCount')}",
+                    "tenantsProcessed": "@{length(outputs('Get_Delegated_Tenants_Config')['delegatedTenants'])}",
+                    "lookbackTime": "@{variables('lookbackTime')}"
+                },
+                "description": "Create summary of sync operation for logging/monitoring"
+            }
+        },
+        "outputs": {},
+        "parameters": {
+            "mainWorkspaceId": {
+                "defaultValue": "/subscriptions/28e1e42a-4438-4c30-9a5f-7d7b488fd883/resourceGroups/1-edee54f1-playground-sandbox/providers/Microsoft.OperationalInsights/workspaces/sentinel-multitentnat",
+                "type": "String"
+            },
+            "lookbackMinutes": {
+                "defaultValue": 10,
+                "type": "Int"
+            },
+            "$connections": {
+                "type": "Object",
+                "defaultValue": {}
+            }
+        }
+    },
+    "parameters": {
+        "$connections": {
+            "type": "Object",
+            "value": {
+                "azuresentinel": {
+                    "id": "/subscriptions/28e1e42a-4438-4c30-9a5f-7d7b488fd883/providers/Microsoft.Web/locations/westus/managedApis/azuresentinel",
+                    "connectionId": "/subscriptions/28e1e42a-4438-4c30-9a5f-7d7b488fd883/resourceGroups/1-edee54f1-playground-sandbox/providers/Microsoft.Web/connections/azuresentinel",
+                    "connectionName": "azuresentinel",
+                    "connectionProperties": {
+                        "authentication": {
+                            "type": "ManagedServiceIdentity"
+                        }
+                    }
+                },
+                "azuremonitorlogs": {
+                    "id": "/subscriptions/28e1e42a-4438-4c30-9a5f-7d7b488fd883/providers/Microsoft.Web/locations/westus/managedApis/azuremonitorlogs",
+                    "connectionId": "/subscriptions/28e1e42a-4438-4c30-9a5f-7d7b488fd883/resourceGroups/1-edee54f1-playground-sandbox/providers/Microsoft.Web/connections/loganalytics-query",
+                    "connectionName": "loganalytics-query"
+                }
+            }
+        }
+    }
+}

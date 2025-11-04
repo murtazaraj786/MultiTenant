@@ -134,12 +134,10 @@
                             },
                             "method": "put",
                             "body": {
-                              "properties": {
-                                "title": "@{items('For_Each_Delegated_Tenant')?['tenantId']}: @{items('For_Each_Incident')?['Title']}",
-                                "description": "Source Tenant: @{items('For_Each_Delegated_Tenant')?['tenantId']}\nOriginal Incident Number: @{items('For_Each_Incident')?['IncidentNumber']}\n\n@{items('For_Each_Incident')?['Description']}",
-                                "severity": "@items('For_Each_Incident')?['Severity']",
-                                "status": "@items('For_Each_Incident')?['Status']"
-                              }
+                              "title": "@{items('For_Each_Delegated_Tenant')?['tenantId']}: @{items('For_Each_Incident')?['Title']}",
+                              "description": "Source Tenant: @{items('For_Each_Delegated_Tenant')?['tenantId']}\nOriginal Incident Number: @{items('For_Each_Incident')?['IncidentNumber']}\n\n@{items('For_Each_Incident')?['Description']}",
+                              "severity": "@items('For_Each_Incident')?['Severity']",
+                              "status": "@items('For_Each_Incident')?['Status']"
                             },
                             "path": "/Incidents/subscriptions/@{encodeURIComponent(parameters('mainWorkspaceId'))}/incidents/@{encodeURIComponent(first(body('Filter_Existing_Incident'))?['name'])}"
                           }
@@ -163,17 +161,10 @@
                               },
                               "method": "put",
                               "body": {
-                                "properties": {
-                                  "title": "@{items('For_Each_Delegated_Tenant')?['tenantId']}: @{items('For_Each_Incident')?['Title']}",
-                                  "description": "Source Tenant: @{items('For_Each_Delegated_Tenant')?['tenantId']}\nOriginal Incident Number: @{items('For_Each_Incident')?['IncidentNumber']}\n\n@{items('For_Each_Incident')?['Description']}",
-                                  "severity": "@items('For_Each_Incident')?['Severity']",
-                                  "status": "@items('For_Each_Incident')?['Status']",
-                                  "additionalData": {
-                                    "sourceIncidentId": "@{items('For_Each_Delegated_Tenant')?['tenantId']}-@{items('For_Each_Incident')?['IncidentNumber']}",
-                                    "sourceTenantId": "@{items('For_Each_Delegated_Tenant')?['tenantId']}",
-                                    "sourceWorkspace": "@{items('For_Each_Delegated_Tenant')?['workspaceName']}"
-                                  }
-                                }
+                                "title": "@{items('For_Each_Delegated_Tenant')?['tenantId']}: @{items('For_Each_Incident')?['Title']}",
+                                "description": "Source Tenant: @{items('For_Each_Delegated_Tenant')?['tenantId']}\nOriginal Incident Number: @{items('For_Each_Incident')?['IncidentNumber']}\n\n@{items('For_Each_Incident')?['Description']}",
+                                "severity": "@items('For_Each_Incident')?['Severity']",
+                                "status": "@items('For_Each_Incident')?['Status']"
                               },
                               "path": "/Incidents/subscriptions/@{encodeURIComponent(parameters('mainWorkspaceId'))}"
                             }

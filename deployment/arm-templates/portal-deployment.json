@@ -314,16 +314,10 @@
                               "type": "ApiConnection",
                               "inputs": {
                                 "body": {
-                                  "properties": {
-                                    "title": "[@{outputs('Compose_Unique_Incident_ID')}] @{items('For_Each_Incident')['Title']}",
-                                    "description": "**Source Tenant:** @{items('For_Each_Delegated_Tenant')['tenantName']} (@{items('For_Each_Delegated_Tenant')['tenantId']})\n**Original Incident #:** @{items('For_Each_Incident')['IncidentNumber']}\n**Source Workspace:** @{items('For_Each_Delegated_Tenant')['workspaceName']}\n\n---\n\n@{items('For_Each_Incident')['Description']}",
-                                    "severity": "@{items('For_Each_Incident')['Severity']}",
-                                    "status": "@{items('For_Each_Incident')['Status']}",
-                                    "classification": "@{items('For_Each_Incident')['Classification']}",
-                                    "classificationComment": "@{items('For_Each_Incident')['ClassificationComment']}",
-                                    "classificationReason": "@{items('For_Each_Incident')['ClassificationReason']}",
-                                    "owner": "@{items('For_Each_Incident')['Owner']}"
-                                  }
+                                  "title": "[@{outputs('Compose_Unique_Incident_ID')}] @{items('For_Each_Incident')['Title']}",
+                                  "description": "**Source Tenant:** @{items('For_Each_Delegated_Tenant')['tenantName']} (@{items('For_Each_Delegated_Tenant')['tenantId']})\n**Original Incident #:** @{items('For_Each_Incident')['IncidentNumber']}\n**Source Workspace:** @{items('For_Each_Delegated_Tenant')['workspaceName']}\n\n---\n\n@{items('For_Each_Incident')['Description']}",
+                                  "severity": "@{items('For_Each_Incident')['Severity']}",
+                                  "status": "@{items('For_Each_Incident')['Status']}"
                                 },
                                 "host": {
                                   "connection": {
@@ -359,12 +353,9 @@
                                 "type": "ApiConnection",
                                 "inputs": {
                                   "body": {
-                                    "properties": {
-                                      "severity": "@{items('For_Each_Incident')['Severity']}",
-                                      "status": "@{items('For_Each_Incident')['Status']}",
-                                      "classification": "@{items('For_Each_Incident')['Classification']}",
-                                      "classificationComment": "@{items('For_Each_Incident')['ClassificationComment']}"
-                                    }
+                                    "title": "[@{outputs('Compose_Unique_Incident_ID')}] @{items('For_Each_Incident')['Title']}",
+                                    "severity": "@{items('For_Each_Incident')['Severity']}",
+                                    "status": "@{items('For_Each_Incident')['Status']}"
                                   },
                                   "host": {
                                     "connection": {

@@ -1,0 +1,50 @@
+{
+  "delegatedTenants": [
+    {
+      "tenantId": "84f1e4ea-8554-43e1-8709-f0b8589ea118",
+      "tenantName": "Pluralsight Sandbox",
+      "subscriptionId": "28e1e42a-4438-4c30-9a5f-7d7b488fd883",
+      "resourceGroup": "1-edee54f1-playground-sandbox",
+      "workspaceName": "sentinel-multitentnat",
+      "enabled": true,
+      "description": "Temporary Pluralsight sandbox - pull incidents from here before expiry"
+    }
+  ],
+  "mainTenant": {
+    "tenantId": "dcfeeacc-5825-4e13-8238-d7b052837b25",
+    "subscriptionId": "7d727b43-c480-4637-9b2d-f53db5982220",
+    "resourceGroup": "rg-uks-sentinel",
+    "workspaceName": "logs-uks-sentinel"
+  },
+  "deploymentInfo": {
+    "scenario": "Sandbox to Production Testing",
+    "description": "This configuration pulls incidents from a temporary Pluralsight Azure sandbox into a permanent 6DG Cyber Development tenant. The Logic App runs in the 6DG tenant to ensure it survives after the sandbox expires.",
+    "mainTenant": {
+      "name": "6DG Cyber Development",
+      "purpose": "Permanent production environment - Logic App deployed here",
+      "sentinelWorkspace": "logs-uks-sentinel (in rg-uks-sentinel)",
+      "role": "Creates and stores incidents synced from delegated tenants"
+    },
+    "delegatedTenant": {
+      "name": "Pluralsight Sandbox",
+      "purpose": "Temporary testing/learning environment",
+      "sentinelWorkspace": "sentinel-multitentnat (in 1-edee54f1-playground-sandbox)",
+      "role": "Source of incidents to pull from before sandbox expires",
+      "limitation": "Auto-deleted after sandbox session ends"
+    },
+    "setupSteps": [
+      "1. Deploy Logic App in 6DG Cyber Development tenant",
+      "2. Create Azure Lighthouse delegation from Pluralsight sandbox to 6DG tenant",
+      "3. Grant Logic App's Managed Identity 'Log Analytics Reader' on sandbox workspace",
+      "4. Authorize API connections with appropriate credentials",
+      "5. Run Logic App to pull incidents from sandbox to 6DG",
+      "6. Verify incidents are created in logs-uks-sentinel workspace"
+    ],
+    "notes": [
+      "Logic App must be deployed in mainTenant (6DG) to survive sandbox expiry",
+      "Lighthouse delegation allows cross-tenant Log Analytics queries",
+      "API connections need OAuth authorization with credentials from both tenants",
+      "Sandbox has time limits - sync data frequently before expiry"
+    ]
+  }
+}

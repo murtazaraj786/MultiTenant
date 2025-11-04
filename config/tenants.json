@@ -1,39 +1,19 @@
 {
   "delegatedTenants": [
     {
-      "tenantId": "00000000-0000-0000-0000-000000000000",
+      "tenantId": "REPLACE-WITH-DELEGATED-TENANT-ID",
       "tenantName": "Customer Tenant 1",
-      "subscriptionId": "00000000-0000-0000-0000-000000000000",
-      "resourceGroup": "sentinel-rg",
-      "workspaceName": "customer1-sentinel-workspace",
-      "workspaceId": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.OperationalInsights/workspaces/{workspaceName}",
+      "subscriptionId": "REPLACE-WITH-DELEGATED-SUBSCRIPTION-ID",
+      "resourceGroup": "REPLACE-WITH-DELEGATED-RG",
+      "workspaceName": "REPLACE-WITH-DELEGATED-WORKSPACE",
       "enabled": true,
-      "description": "Production customer tenant",
-      "tags": {
-        "customer": "Customer1",
-        "environment": "production"
-      }
-    },
-    {
-      "tenantId": "11111111-1111-1111-1111-111111111111",
-      "tenantName": "Customer Tenant 2",
-      "subscriptionId": "11111111-1111-1111-1111-111111111111",
-      "resourceGroup": "security-rg",
-      "workspaceName": "customer2-sentinel-workspace",
-      "workspaceId": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.OperationalInsights/workspaces/{workspaceName}",
-      "enabled": false,
-      "description": "Test customer tenant - disabled for now",
-      "tags": {
-        "customer": "Customer2",
-        "environment": "test"
-      }
+      "description": "First delegated customer tenant"
     }
   ],
   "mainTenant": {
-    "tenantId": "MAIN-TENANT-ID",
-    "subscriptionId": "MAIN-SUBSCRIPTION-ID",
-    "resourceGroup": "sentinel-main-rg",
-    "workspaceName": "main-sentinel-workspace",
-    "workspaceId": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.OperationalInsights/workspaces/{workspaceName}"
+    "tenantId": "REPLACE-WITH-MAIN-TENANT-ID",
+    "subscriptionId": "REPLACE-WITH-MAIN-SUBSCRIPTION-ID",
+    "resourceGroup": "REPLACE-WITH-MAIN-RG",
+    "workspaceName": "REPLACE-WITH-MAIN-WORKSPACE"
   }
 }

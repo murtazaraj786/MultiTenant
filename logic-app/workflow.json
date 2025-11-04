@@ -1,0 +1,290 @@
+{
+  "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "$connections": {
+      "defaultValue": {},
+      "type": "Object"
+    },
+    "mainWorkspaceId": {
+      "defaultValue": "",
+      "type": "String"
+    },
+    "lookbackMinutes": {
+      "defaultValue": 10,
+      "type": "Int"
+    }
+  },
+  "triggers": {
+    "Recurrence": {
+      "recurrence": {
+        "frequency": "Minute",
+        "interval": 5
+      },
+      "type": "Recurrence"
+    }
+  },
+  "actions": {
+    "Initialize_ProcessedCount": {
+      "runAfter": {},
+      "type": "InitializeVariable",
+      "inputs": {
+        "variables": [
+          {
+            "name": "ProcessedCount",
+            "type": "Integer",
+            "value": 0
+          }
+        ]
+      }
+    },
+    "Initialize_ErrorCount": {
+      "runAfter": {
+        "Initialize_ProcessedCount": [
+          "Succeeded"
+        ]
+      },
+      "type": "InitializeVariable",
+      "inputs": {
+        "variables": [
+          {
+            "name": "ErrorCount",
+            "type": "Integer",
+            "value": 0
+          }
+        ]
+      }
+    },
+    "Get_Delegated_Tenants_Config": {
+      "runAfter": {
+        "Initialize_ErrorCount": [
+          "Succeeded"
+        ]
+      },
+      "type": "Compose",
+      "inputs": "@json('{\"delegatedTenants\": []}')",
+      "description": "Load from Azure Key Vault or Storage Account in production"
+    },
+    "For_Each_Delegated_Tenant": {
+      "foreach": "@body('Get_Delegated_Tenants_Config')?['delegatedTenants']",
+      "actions": {
+        "Check_If_Tenant_Enabled": {
+          "actions": {
+            "Query_Delegated_Sentinel_Incidents": {
+              "runAfter": {},
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['azuremonitorlogs']['connectionId']"
+                  }
+                },
+                "method": "post",
+                "body": "SecurityIncident\n| where TimeGenerated > ago(@{parameters('lookbackMinutes')}m)\n| where Status in ('New', 'Active')\n| project IncidentNumber, Title, Severity, Status, CreatedTime, LastModifiedTime, Owner, Description, ProviderName, AdditionalData, Labels, TenantId, _ResourceId\n| order by CreatedTime desc",
+                "path": "/queryData",
+                "queries": {
+                  "subscriptions": "@items('For_Each_Delegated_Tenant')?['subscriptionId']",
+                  "resourcegroups": "@items('For_Each_Delegated_Tenant')?['resourceGroup']",
+                  "resourcetype": "Log Analytics Workspace",
+                  "resourcename": "@items('For_Each_Delegated_Tenant')?['workspaceName']",
+                  "timerange": "Last 12 hours"
+                }
+              }
+            },
+            "For_Each_Incident": {
+              "foreach": "@body('Query_Delegated_Sentinel_Incidents')?['value']",
+              "actions": {
+                "Try_Create_Or_Update_Incident": {
+                  "actions": {
+                    "Check_If_Incident_Exists": {
+                      "runAfter": {},
+                      "type": "ApiConnection",
+                      "inputs": {
+                        "host": {
+                          "connection": {
+                            "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                          }
+                        },
+                        "method": "get",
+                        "path": "/Incidents/subscriptions/@{encodeURIComponent(parameters('mainWorkspaceId'))}"
+                      }
+                    },
+                    "Filter_Existing_Incident": {
+                      "runAfter": {
+                        "Check_If_Incident_Exists": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "Query",
+                      "inputs": {
+                        "from": "@body('Check_If_Incident_Exists')?['value']",
+                        "where": "@contains(item()?['properties']?['additionalData']?['sourceIncidentId'], concat(items('For_Each_Delegated_Tenant')?['tenantId'], '-', items('For_Each_Incident')?['IncidentNumber']))"
+                      }
+                    },
+                    "Condition_Incident_Exists": {
+                      "actions": {
+                        "Update_Existing_Incident": {
+                          "runAfter": {},
+                          "type": "ApiConnection",
+                          "inputs": {
+                            "host": {
+                              "connection": {
+                                "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                              }
+                            },
+                            "method": "put",
+                            "body": {
+                              "properties": {
+                                "title": "@{items('For_Each_Delegated_Tenant')?['tenantId']}: @{items('For_Each_Incident')?['Title']}",
+                                "description": "Source Tenant: @{items('For_Each_Delegated_Tenant')?['tenantId']}\nOriginal Incident Number: @{items('For_Each_Incident')?['IncidentNumber']}\n\n@{items('For_Each_Incident')?['Description']}",
+                                "severity": "@items('For_Each_Incident')?['Severity']",
+                                "status": "@items('For_Each_Incident')?['Status']"
+                              }
+                            },
+                            "path": "/Incidents/subscriptions/@{encodeURIComponent(parameters('mainWorkspaceId'))}/incidents/@{encodeURIComponent(first(body('Filter_Existing_Incident'))?['name'])}"
+                          }
+                        }
+                      },
+                      "runAfter": {
+                        "Filter_Existing_Incident": [
+                          "Succeeded"
+                        ]
+                      },
+                      "else": {
+                        "actions": {
+                          "Create_New_Incident": {
+                            "runAfter": {},
+                            "type": "ApiConnection",
+                            "inputs": {
+                              "host": {
+                                "connection": {
+                                  "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                                }
+                              },
+                              "method": "put",
+                              "body": {
+                                "properties": {
+                                  "title": "@{items('For_Each_Delegated_Tenant')?['tenantId']}: @{items('For_Each_Incident')?['Title']}",
+                                  "description": "Source Tenant: @{items('For_Each_Delegated_Tenant')?['tenantId']}\nOriginal Incident Number: @{items('For_Each_Incident')?['IncidentNumber']}\n\n@{items('For_Each_Incident')?['Description']}",
+                                  "severity": "@items('For_Each_Incident')?['Severity']",
+                                  "status": "@items('For_Each_Incident')?['Status']",
+                                  "additionalData": {
+                                    "sourceIncidentId": "@{items('For_Each_Delegated_Tenant')?['tenantId']}-@{items('For_Each_Incident')?['IncidentNumber']}",
+                                    "sourceTenantId": "@{items('For_Each_Delegated_Tenant')?['tenantId']}",
+                                    "sourceWorkspace": "@{items('For_Each_Delegated_Tenant')?['workspaceName']}"
+                                  }
+                                }
+                              },
+                              "path": "/Incidents/subscriptions/@{encodeURIComponent(parameters('mainWorkspaceId'))}"
+                            }
+                          }
+                        }
+                      },
+                      "expression": {
+                        "and": [
+                          {
+                            "greater": [
+                              "@length(body('Filter_Existing_Incident'))",
+                              0
+                            ]
+                          }
+                        ]
+                      },
+                      "type": "If"
+                    },
+                    "Increment_ProcessedCount": {
+                      "runAfter": {
+                        "Condition_Incident_Exists": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "IncrementVariable",
+                      "inputs": {
+                        "name": "ProcessedCount",
+                        "value": 1
+                      }
+                    }
+                  },
+                  "runAfter": {},
+                  "type": "Scope"
+                },
+                "Catch_Incident_Error": {
+                  "actions": {
+                    "Increment_ErrorCount": {
+                      "runAfter": {},
+                      "type": "IncrementVariable",
+                      "inputs": {
+                        "name": "ErrorCount",
+                        "value": 1
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "Try_Create_Or_Update_Incident": [
+                      "Failed",
+                      "Skipped",
+                      "TimedOut"
+                    ]
+                  },
+                  "type": "Scope"
+                }
+              },
+              "runAfter": {
+                "Query_Delegated_Sentinel_Incidents": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Foreach",
+              "runtimeConfiguration": {
+                "concurrency": {
+                  "repetitions": 1
+                }
+              }
+            }
+          },
+          "runAfter": {},
+          "expression": {
+            "and": [
+              {
+                "equals": [
+                  "@items('For_Each_Delegated_Tenant')?['enabled']",
+                  true
+                ]
+              }
+            ]
+          },
+          "type": "If"
+        }
+      },
+      "runAfter": {
+        "Get_Delegated_Tenants_Config": [
+          "Succeeded"
+        ]
+      },
+      "type": "Foreach",
+      "runtimeConfiguration": {
+        "concurrency": {
+          "repetitions": 1
+        }
+      }
+    },
+    "Log_Summary": {
+      "runAfter": {
+        "For_Each_Delegated_Tenant": [
+          "Succeeded",
+          "Failed",
+          "Skipped"
+        ]
+      },
+      "type": "Compose",
+      "inputs": {
+        "runId": "@workflow().run.name",
+        "runTime": "@utcNow()",
+        "processedIncidents": "@variables('ProcessedCount')",
+        "errors": "@variables('ErrorCount')",
+        "status": "Completed"
+      }
+    }
+  },
+  "outputs": {}
+}

@@ -1,0 +1,131 @@
+{
+  "fieldMappings": {
+    "description": "Maps fields from delegated tenant incidents to main tenant incidents",
+    "mappings": [
+      {
+        "sourceField": "IncidentNumber",
+        "destinationField": "additionalData.sourceIncidentNumber",
+        "transform": "none",
+        "required": true,
+        "description": "Original incident number from source tenant"
+      },
+      {
+        "sourceField": "Title",
+        "destinationField": "title",
+        "transform": "prefix",
+        "transformValue": "{tenantId}: ",
+        "required": true,
+        "description": "Incident title with tenant prefix"
+      },
+      {
+        "sourceField": "Description",
+        "destinationField": "description",
+        "transform": "prepend",
+        "transformValue": "Source Tenant: {tenantId}\nOriginal Incident Number: {IncidentNumber}\n\n",
+        "required": false,
+        "description": "Incident description with source information"
+      },
+      {
+        "sourceField": "Severity",
+        "destinationField": "severity",
+        "transform": "mapping",
+        "mapping": {
+          "High": "High",
+          "Medium": "Medium",
+          "Low": "Low",
+          "Informational": "Informational"
+        },
+        "required": true,
+        "description": "Incident severity"
+      },
+      {
+        "sourceField": "Status",
+        "destinationField": "status",
+        "transform": "mapping",
+        "mapping": {
+          "New": "New",
+          "Active": "Active",
+          "Closed": "Closed"
+        },
+        "required": true,
+        "description": "Incident status"
+      },
+      {
+        "sourceField": "CreatedTime",
+        "destinationField": "additionalData.sourceCreatedTime",
+        "transform": "none",
+        "required": false,
+        "description": "Original creation time in source tenant"
+      },
+      {
+        "sourceField": "LastModifiedTime",
+        "destinationField": "additionalData.sourceLastModifiedTime",
+        "transform": "none",
+        "required": false,
+        "description": "Last modification time in source tenant"
+      },
+      {
+        "sourceField": "Owner",
+        "destinationField": "owner",
+        "transform": "none",
+        "required": false,
+        "description": "Incident owner from source tenant"
+      },
+      {
+        "sourceField": "Labels",
+        "destinationField": "labels",
+        "transform": "append",
+        "transformValue": ["Multi-Tenant", "Lighthouse-Synced"],
+        "required": false,
+        "description": "Incident labels with custom tags"
+      },
+      {
+        "sourceField": "TenantId",
+        "destinationField": "additionalData.sourceTenantId",
+        "transform": "none",
+        "required": true,
+        "description": "Source tenant ID"
+      },
+      {
+        "sourceField": "_ResourceId",
+        "destinationField": "additionalData.sourceResourceId",
+        "transform": "none",
+        "required": false,
+        "description": "Original resource ID from source"
+      },
+      {
+        "sourceField": "ProviderName",
+        "destinationField": "additionalData.sourceProvider",
+        "transform": "none",
+        "required": false,
+        "description": "Alert provider name"
+      }
+    ],
+    "customFields": [
+      {
+        "field": "additionalData.syncedBy",
+        "value": "LogicApp-Multi-Tenant-Sync",
+        "description": "Identifies incidents synced by this solution"
+      },
+      {
+        "field": "additionalData.syncTime",
+        "value": "{utcNow}",
+        "description": "Timestamp when incident was synced"
+      },
+      {
+        "field": "additionalData.sourceWorkspace",
+        "value": "{workspaceName}",
+        "description": "Source workspace name"
+      }
+    ]
+  },
+  "transformFunctions": {
+    "none": "Pass through value unchanged",
+    "prefix": "Add text before the value",
+    "prepend": "Add text with newline before the value",
+    "append": "Add values to an array",
+    "mapping": "Map values using a dictionary",
+    "uppercase": "Convert to uppercase",
+    "lowercase": "Convert to lowercase"
+  }
+}

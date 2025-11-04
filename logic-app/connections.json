@@ -1,0 +1,19 @@
+{
+  "$connections": {
+    "azuresentinel": {
+      "connectionId": "",
+      "connectionName": "azuresentinel",
+      "connectionProperties": {
+        "authentication": {
+          "type": "ManagedServiceIdentity"
+        }
+      },
+      "id": "/subscriptions/{subscriptionId}/providers/Microsoft.Web/locations/{location}/managedApis/azuresentinel"
+    },
+    "azuremonitorlogs": {
+      "connectionId": "",
+      "connectionName": "loganalytics-query",
+      "id": "/subscriptions/{subscriptionId}/providers/Microsoft.Web/locations/{location}/managedApis/azuremonitorlogs"
+    }
+  }
+}

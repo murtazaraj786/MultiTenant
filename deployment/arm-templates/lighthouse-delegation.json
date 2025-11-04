@@ -1,0 +1,86 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "mspOfferName": {
+      "type": "string",
+      "defaultValue": "Sentinel Multi-Tenant Test"
+    },
+    "mspOfferDescription": {
+      "type": "string",
+      "defaultValue": "Test delegation for Sentinel incident sync"
+    },
+    "managedByTenantId": {
+      "type": "string",
+      "metadata": {
+        "description": "Your service provider tenant ID (where Logic App is deployed)"
+      }
+    },
+    "managedIdentityPrincipalId": {
+      "type": "string",
+      "metadata": {
+        "description": "Principal ID of the Logic App's managed identity"
+      }
+    }
+  },
+  "variables": {
+    "mspRegistrationName": "[guid(parameters('mspOfferName'))]",
+    "mspAssignmentName": "[guid(parameters('mspOfferName'))]",
+    "sentinelContributorRoleId": "ab8e14d6-4a74-4a29-9ba8-549422addade",
+    "logAnalyticsReaderRoleId": "73c42c96-874c-492b-b04d-ab87d138a893"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ManagedServices/registrationDefinitions",
+      "apiVersion": "2020-02-01-preview",
+      "name": "[variables('mspRegistrationName')]",
+      "properties": {
+        "registrationDefinitionName": "[parameters('mspOfferName')]",
+        "description": "[parameters('mspOfferDescription')]",
+        "managedByTenantId": "[parameters('managedByTenantId')]",
+        "authorizations": [
+          {
+            "principalId": "[parameters('managedIdentityPrincipalId')]",
+            "roleDefinitionId": "[variables('sentinelContributorRoleId')]",
+            "principalIdDisplayName": "Sentinel Sync Logic App - Contributor"
+          },
+          {
+            "principalId": "[parameters('managedIdentityPrincipalId')]",
+            "roleDefinitionId": "[variables('logAnalyticsReaderRoleId')]",
+            "principalIdDisplayName": "Sentinel Sync Logic App - Reader"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.ManagedServices/registrationAssignments",
+      "apiVersion": "2020-02-01-preview",
+      "name": "[variables('mspAssignmentName')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedServices/registrationDefinitions/', variables('mspRegistrationName'))]"
+      ],
+      "properties": {
+        "registrationDefinitionId": "[resourceId('Microsoft.ManagedServices/registrationDefinitions/', variables('mspRegistrationName'))]"
+      }
+    }
+  ],
+  "outputs": {
+    "mspOfferName": {
+      "type": "string",
+      "value": "[parameters('mspOfferName')]"
+    },
+    "authorizations": {
+      "type": "array",
+      "value": [
+        {
+          "principalId": "[parameters('managedIdentityPrincipalId')]",
+          "roleDefinitionId": "[variables('sentinelContributorRoleId')]"
+        },
+        {
+          "principalId": "[parameters('managedIdentityPrincipalId')]",
+          "roleDefinitionId": "[variables('logAnalyticsReaderRoleId')]"
+        }
+      ]
+    }
+  }
+}

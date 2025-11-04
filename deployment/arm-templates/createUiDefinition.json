@@ -1,0 +1,319 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+  "handler": "Microsoft.Azure.CreateUIDef",
+  "version": "0.1.2-preview",
+  "parameters": {
+    "basics": [
+      {
+        "name": "logicAppName",
+        "type": "Microsoft.Common.TextBox",
+        "label": "Logic App Name",
+        "defaultValue": "sentinel-incident-sync",
+        "toolTip": "Name for the Logic App that will sync incidents",
+        "constraints": {
+          "required": true,
+          "regex": "^[a-z0-9A-Z-]{1,80}$",
+          "validationMessage": "Only alphanumeric characters and hyphens are allowed, and the value must be 1-80 characters long."
+        },
+        "visible": true
+      },
+      {
+        "name": "environment",
+        "type": "Microsoft.Common.DropDown",
+        "label": "Environment",
+        "defaultValue": "Production",
+        "toolTip": "Select the environment for this deployment",
+        "constraints": {
+          "required": true,
+          "allowedValues": [
+            {
+              "label": "Development",
+              "value": "Development"
+            },
+            {
+              "label": "Test",
+              "value": "Test"
+            },
+            {
+              "label": "Staging",
+              "value": "Staging"
+            },
+            {
+              "label": "Production",
+              "value": "Production"
+            }
+          ]
+        },
+        "visible": true
+      }
+    ],
+    "steps": [
+      {
+        "name": "mainSentinelConfig",
+        "label": "Main Sentinel Configuration",
+        "elements": [
+          {
+            "name": "mainSentinelInfo",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "icon": "Info",
+              "text": "Configure the main Sentinel workspace where incidents from delegated tenants will be synced TO. This is your central/primary Sentinel instance."
+            }
+          },
+          {
+            "name": "mainResourceGroup",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Main Sentinel Resource Group",
+            "placeholder": "e.g., sentinel-main-rg",
+            "toolTip": "Resource group containing your main Sentinel workspace",
+            "constraints": {
+              "required": true,
+              "regex": "^[a-zA-Z0-9._\\-()]+$",
+              "validationMessage": "Resource group name must be alphanumeric with allowed special characters: . _ - ( )"
+            }
+          },
+          {
+            "name": "mainWorkspaceName",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Main Sentinel Workspace Name",
+            "placeholder": "e.g., main-sentinel-workspace",
+            "toolTip": "Name of your main Sentinel Log Analytics workspace",
+            "constraints": {
+              "required": true,
+              "regex": "^[a-zA-Z0-9-]{4,63}$",
+              "validationMessage": "Workspace name must be 4-63 characters, alphanumeric and hyphens only."
+            }
+          },
+          {
+            "name": "mainTenantId",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Main Tenant ID (Optional)",
+            "defaultValue": "[subscription().tenantId]",
+            "placeholder": "Auto-populated with current tenant ID",
+            "toolTip": "Tenant ID of your main Sentinel workspace. Defaults to current tenant.",
+            "constraints": {
+              "required": false,
+              "regex": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+              "validationMessage": "Must be a valid GUID format."
+            }
+          },
+          {
+            "name": "mainSubscriptionId",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Main Subscription ID (Optional)",
+            "defaultValue": "[subscription().subscriptionId]",
+            "placeholder": "Auto-populated with current subscription ID",
+            "toolTip": "Subscription ID containing your main Sentinel workspace. Defaults to current subscription.",
+            "constraints": {
+              "required": false,
+              "regex": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+              "validationMessage": "Must be a valid GUID format."
+            }
+          }
+        ]
+      },
+      {
+        "name": "syncSettings",
+        "label": "Sync Settings",
+        "elements": [
+          {
+            "name": "syncSettingsInfo",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "icon": "Info",
+              "text": "Configure how frequently the Logic App checks for new incidents and how far back to look each time."
+            }
+          },
+          {
+            "name": "recurrenceFrequency",
+            "type": "Microsoft.Common.DropDown",
+            "label": "Recurrence Frequency",
+            "defaultValue": "Minute",
+            "toolTip": "How often the sync should run",
+            "constraints": {
+              "required": true,
+              "allowedValues": [
+                {
+                  "label": "Every Minute(s)",
+                  "value": "Minute"
+                },
+                {
+                  "label": "Every Hour(s)",
+                  "value": "Hour"
+                },
+                {
+                  "label": "Every Day(s)",
+                  "value": "Day"
+                },
+                {
+                  "label": "Every Week(s)",
+                  "value": "Week"
+                },
+                {
+                  "label": "Every Month(s)",
+                  "value": "Month"
+                }
+              ]
+            }
+          },
+          {
+            "name": "recurrenceInterval",
+            "type": "Microsoft.Common.Slider",
+            "min": 1,
+            "max": 60,
+            "label": "Recurrence Interval",
+            "defaultValue": 5,
+            "toolTip": "The interval value for recurrence (e.g., every 5 minutes)",
+            "constraints": {
+              "required": true
+            },
+            "visible": true
+          },
+          {
+            "name": "lookbackMinutes",
+            "type": "Microsoft.Common.Slider",
+            "min": 5,
+            "max": 1440,
+            "label": "Lookback Window (Minutes)",
+            "defaultValue": 10,
+            "toolTip": "How many minutes back to query for incidents on each run. Should be >= recurrence interval.",
+            "constraints": {
+              "required": true
+            },
+            "visible": true
+          },
+          {
+            "name": "lookbackWarning",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": "[greater(steps('syncSettings').recurrenceInterval, steps('syncSettings').lookbackMinutes)]",
+            "options": {
+              "icon": "Warning",
+              "text": "Warning: Lookback window should be equal to or greater than recurrence interval to avoid missing incidents."
+            }
+          }
+        ]
+      },
+      {
+        "name": "security",
+        "label": "Security & Identity",
+        "elements": [
+          {
+            "name": "securityInfo",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "icon": "Info",
+              "text": "The Logic App uses a system-assigned managed identity to authenticate to Sentinel and Azure Monitor Logs. You'll need to grant permissions after deployment."
+            }
+          },
+          {
+            "name": "enableManagedIdentity",
+            "type": "Microsoft.Common.CheckBox",
+            "label": "Enable System-Assigned Managed Identity",
+            "defaultValue": true,
+            "toolTip": "Required for authenticating to Sentinel and Log Analytics workspaces",
+            "constraints": {
+              "required": false
+            }
+          },
+          {
+            "name": "managedIdentityNote",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "icon": "Info",
+              "text": "After deployment, you must: \n1. Assign 'Microsoft Sentinel Contributor' role to the managed identity on main Sentinel workspace\n2. Configure Lighthouse delegation in customer tenants\n3. Update tenant configuration in the Logic App"
+            }
+          }
+        ]
+      },
+      {
+        "name": "postDeployment",
+        "label": "Post-Deployment Steps",
+        "elements": [
+          {
+            "name": "postDeploymentInfo",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "icon": "Info",
+              "text": "After clicking 'Create', please complete these steps to finish setup:"
+            }
+          },
+          {
+            "name": "postDeploymentSteps",
+            "type": "Microsoft.Common.Section",
+            "label": "Required Post-Deployment Actions",
+            "elements": [
+              {
+                "name": "step1",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "1. Copy the Managed Identity Principal ID from deployment outputs"
+                }
+              },
+              {
+                "name": "step2",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "2. Grant RBAC roles on main Sentinel workspace:\n   - Microsoft Sentinel Contributor (ab8e14d6-4a74-4a29-9ba8-549422addade)"
+                }
+              },
+              {
+                "name": "step3",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "3. Deploy Lighthouse delegation in each customer tenant using:\n   deployment/arm-templates/lighthouse-delegation.json"
+                }
+              },
+              {
+                "name": "step4",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "4. Update Logic App 'Get_Delegated_Tenants_Config' action with your actual tenant configuration"
+                }
+              },
+              {
+                "name": "step5",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "5. Test manually by running the Logic App from Azure Portal"
+                }
+              }
+            ],
+            "visible": true
+          },
+          {
+            "name": "documentationLink",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "icon": "Info",
+              "text": "Full documentation available in: docs/DEPLOYMENT.md and docs/LIGHTHOUSE-TESTING.md"
+            }
+          }
+        ]
+      }
+    ],
+    "outputs": {
+      "logicAppName": "[basics('logicAppName')]",
+      "location": "[location()]",
+      "mainTenantId": "[if(equals(steps('mainSentinelConfig').mainTenantId, ''), subscription().tenantId, steps('mainSentinelConfig').mainTenantId)]",
+      "mainSubscriptionId": "[if(equals(steps('mainSentinelConfig').mainSubscriptionId, ''), subscription().subscriptionId, steps('mainSentinelConfig').mainSubscriptionId)]",
+      "mainResourceGroup": "[steps('mainSentinelConfig').mainResourceGroup]",
+      "mainWorkspaceName": "[steps('mainSentinelConfig').mainWorkspaceName]",
+      "recurrenceFrequency": "[steps('syncSettings').recurrenceFrequency]",
+      "recurrenceInterval": "[steps('syncSettings').recurrenceInterval]",
+      "lookbackMinutes": "[steps('syncSettings').lookbackMinutes]",
+      "enableManagedIdentity": "[steps('security').enableManagedIdentity]",
+      "environment": "[basics('environment')]"
+    }
+  }
+}

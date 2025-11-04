@@ -1,0 +1,68 @@
+{
+  "syncSettings": {
+    "frequency": {
+      "type": "Minute",
+      "interval": 5,
+      "description": "How often to run the sync (default: every 5 minutes)"
+    },
+    "lookbackPeriod": {
+      "minutes": 10,
+      "description": "How far back to look for incidents in each sync run"
+    },
+    "timeout": {
+      "seconds": 300,
+      "description": "Maximum time allowed for each sync operation"
+    }
+  },
+  "filters": {
+    "severity": {
+      "include": ["High", "Medium", "Low", "Informational"],
+      "description": "Incident severities to sync. Remove values to exclude certain severities."
+    },
+    "status": {
+      "include": ["New", "Active"],
+      "exclude": ["Closed"],
+      "description": "Incident statuses to sync. Typically excludes closed incidents."
+    },
+    "title": {
+      "excludePatterns": ["Test", "Demo"],
+      "description": "Exclude incidents with titles matching these patterns (case-insensitive)"
+    }
+  },
+  "deduplication": {
+    "enabled": true,
+    "matchFields": ["sourceIncidentId", "sourceTenantId"],
+    "description": "Prevent duplicate incidents from being created"
+  },
+  "enrichment": {
+    "addSourceTenantTag": true,
+    "addSourceWorkspaceTag": true,
+    "prefixTitle": true,
+    "titlePrefix": "{tenantId}: ",
+    "customLabels": [
+      "Multi-Tenant",
+      "Lighthouse-Synced"
+    ],
+    "description": "Add metadata to synced incidents for tracking"
+  },
+  "errorHandling": {
+    "retryAttempts": 3,
+    "retryIntervalSeconds": 30,
+    "continueOnError": true,
+    "logErrors": true,
+    "description": "Configure retry and error handling behavior"
+  },
+  "performance": {
+    "batchSize": 50,
+    "parallelTenants": 1,
+    "parallelIncidents": 1,
+    "description": "Control concurrency to avoid API throttling. Use 1 for sequential processing."
+  },
+  "notifications": {
+    "enabled": false,
+    "emailOnError": false,
+    "emailRecipients": [],
+    "teamsWebhook": "",
+    "description": "Configure notifications for sync failures (implement separately)"
+  }
+}

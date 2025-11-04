@@ -1,0 +1,18 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "mspOfferName": {
+      "value": "Sentinel Multi-Tenant Test"
+    },
+    "mspOfferDescription": {
+      "value": "Test delegation for Sentinel incident synchronization"
+    },
+    "managedByTenantId": {
+      "value": "YOUR-SERVICE-PROVIDER-TENANT-ID"
+    },
+    "managedIdentityPrincipalId": {
+      "value": "YOUR-LOGIC-APP-MANAGED-IDENTITY-PRINCIPAL-ID"
+    }
+  }
+}

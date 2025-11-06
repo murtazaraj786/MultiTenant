@@ -1,20 +1,23 @@
-# Microsoft Sentinel Multi-Tenant Logic App Project
+# Multi-Tenant Sentinel Incident Sync - CLEAN VERSION
 
-This workspace contains a Logic App solution for synchronizing Sentinel incidents across multiple Azure tenants using Azure Lighthouse.
+This workspace contains a **working** Logic App that syncs Sentinel incidents across multiple tenants.
 
-## Project Context
-- **Purpose**: Cross-tenant incident synchronization for Microsoft Sentinel
-- **Technology**: Azure Logic Apps, Azure Lighthouse, Microsoft Sentinel API
-- **Architecture**: Multi-tenant SIEM with centralized incident management
+## What's Here
+- `deploy.json` - ARM template (WORKS!)
+- `deploy.parameters.json` - Configuration file  
+- `deploy.ps1` - Deployment script
+- `README.md` - Instructions
+
+## How It Works
+1. Incident created in source Sentinel → Logic App triggers
+2. Gets incident details → Checks if already synced  
+3. Creates `[SYNCED]` incidents in ALL target tenants
+4. Prevents infinite loops with smart tagging
 
 ## Development Guidelines
-- Follow Azure best practices for Logic Apps
-- Use managed identities for authentication
-- Implement proper error handling and retry logic
-- Keep configuration separate from code
-- Document all API connections and permissions required
+- Keep it simple - no complex configurations
+- One ARM template, one parameters file, one script
+- Clear documentation in README
+- Test with real incidents
 
-## Required Permissions
-- Microsoft Sentinel Contributor on delegated subscriptions
-- Logic App Contributor on main subscription
-- Managed Identity with appropriate API permissions
+That's it. No more complexity.

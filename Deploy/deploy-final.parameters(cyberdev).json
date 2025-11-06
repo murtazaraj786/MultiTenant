@@ -3,37 +3,38 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "logicAppName": {
-      "value": "central-sentinel-sync"
+      "value": "sentinel-incident-sync"
     },
-    "location": {
-      "value": "[resourceGroup().location]"
-    },
-    "remoteSentinelInstances": {
+    "remoteWorkspaces": {
       "value": [
         {
-          "name": "6DG Cyber Development - autolaw",
-          "tenantId": "dcfeeacc-5825-4e13-8238-d7b052837b25",
+          "name": "AutoLAW",
           "subscriptionId": "7d727b43-c480-4637-9b2d-f53db5982220",
           "resourceGroup": "autorg1",
           "workspace": "AutoLAW"
         },
         {
           "name": "CustomerA",
-          "tenantId": "dcfeeacc-5825-4e13-8238-d7b052837b25",
           "subscriptionId": "7d727b43-c480-4637-9b2d-f53db5982220",
           "resourceGroup": "rg-uks-sentinel",
           "workspace": "CustomerA"
         }
       ]
     },
-    "pollingIntervalMinutes": {
-      "value": 5
+    "centralSubscriptionId": {
+      "value": "7d727b43-c480-4637-9b2d-f53db5982220"
     },
-    "centralSentinelResourceGroup": {
+    "centralResourceGroup": {
       "value": "rg-uks-sentinel"
     },
-    "centralSentinelWorkspace": {
+    "centralWorkspace": {
       "value": "logs-uks-sentinel"
+    },
+    "recurrenceFrequency": {
+      "value": "Minute"
+    },
+    "recurrenceInterval": {
+      "value": 5
     }
   }
 }

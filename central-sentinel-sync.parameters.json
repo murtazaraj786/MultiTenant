@@ -5,33 +5,35 @@
     "logicAppName": {
       "value": "central-sentinel-sync"
     },
+    "location": {
+      "value": "[resourceGroup().location]"
+    },
     "remoteSentinelInstances": {
       "value": [
         {
-          "name": "Customer-A-Prod",
-          "tenantId": "TENANT-ID-FOR-CUSTOMER-A",
-          "subscriptionId": "12345678-1234-1234-1234-123456789012",
-          "resourceGroup": "rg-customer-a-sentinel",
-          "workspace": "customer-a-sentinel-workspace"
+          "name": "6DG Cyber Development - autolaw",
+          "tenantId": "dcfeeacc-5825-4e13-8238-d7b052837b25",
+          "subscriptionId": "7d727b43-c480-4637-9b2d-f53db5982220",
+          "resourceGroup": "autorg1",
+          "workspace": "AutoLAW"
         },
         {
-          "name": "Customer-B-Prod",
-          "tenantId": "TENANT-ID-FOR-CUSTOMER-B",
-          "subscriptionId": "87654321-4321-4321-4321-210987654321", 
-          "resourceGroup": "rg-customer-b-sentinel",
-          "workspace": "customer-b-sentinel-workspace"
-        },
-        {
-          "name": "Branch-Office-East",
-          "tenantId": "TENANT-ID-FOR-BRANCH-EAST",
-          "subscriptionId": "11111111-2222-3333-4444-555555555555",
-          "resourceGroup": "rg-branch-east",
-          "workspace": "branch-east-sentinel"
+          "name": "CustomerA",
+          "tenantId": "dcfeeacc-5825-4e13-8238-d7b052837b25",
+          "subscriptionId": "7d727b43-c480-4637-9b2d-f53db5982220",
+          "resourceGroup": "rg-uks-sentinel",
+          "workspace": "CustomerA"
         }
       ]
     },
     "pollingIntervalMinutes": {
       "value": 5
+    },
+    "centralSentinelResourceGroup": {
+      "value": "rg-uks-sentinel"
+    },
+    "centralSentinelWorkspace": {
+      "value": "logs-uks-sentinel"
     }
   }
 }

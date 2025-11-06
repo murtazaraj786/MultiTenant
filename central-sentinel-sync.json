@@ -39,6 +39,25 @@
       "metadata": {
         "description": "How often to check for new incidents (in minutes)"
       }
+    },
+    "centralSentinelSubscriptionId": {
+      "type": "string",
+      "defaultValue": "[subscription().subscriptionId]",
+      "metadata": {
+        "description": "Subscription ID where central Sentinel is deployed"
+      }
+    },
+    "centralSentinelResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource group of central Sentinel workspace"
+      }
+    },
+    "centralSentinelWorkspace": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of central Sentinel workspace"
+      }
     }
   },
   "variables": {
@@ -83,6 +102,18 @@
             "remoteSentinelInstances": {
               "defaultValue": [],
               "type": "Array"
+            },
+            "centralSubscriptionId": {
+              "defaultValue": "",
+              "type": "String"
+            },
+            "centralResourceGroup": {
+              "defaultValue": "",
+              "type": "String"
+            },
+            "centralWorkspace": {
+              "defaultValue": "",
+              "type": "String"
             }
           },
           "triggers": {
@@ -110,12 +141,12 @@
                     "method": "get",
                     "path": "/Incidents",
                     "queries": {
-                      "subscriptionId": "@@items('For_each_remote_instance')['subscriptionId']",
-                      "resourceGroupName": "@@items('For_each_remote_instance')['resourceGroup']",
-                      "workspaceName": "@@items('For_each_remote_instance')['workspace']",
+                      "subscriptionId": "@@{items('For_each_remote_instance')['subscriptionId']}",
+                      "resourceGroupName": "@@{items('For_each_remote_instance')['resourceGroup']}",
+                      "workspaceName": "@@{items('For_each_remote_instance')['workspace']}",
                       "$filter": "properties/createdTimeUtc ge @@{addMinutes(utcNow(), -10)}",
                       "$orderby": "properties/createdTimeUtc desc",
-                      "$top": "50"
+                      "$top": 50
                     }
                   }
                 },
@@ -159,7 +190,12 @@
                               }
                             },
                             "method": "put",
-                            "path": "/Incidents"
+                            "path": "/Incidents",
+                            "queries": {
+                              "subscriptionId": "@@{parameters('centralSubscriptionId')}",
+                              "resourceGroupName": "@@{parameters('centralResourceGroup')}",
+                              "workspaceName": "@@{parameters('centralWorkspace')}"
+                            }
                           }
                         }
                       },
@@ -204,6 +240,15 @@
           },
           "remoteSentinelInstances": {
             "value": "[parameters('remoteSentinelInstances')]"
+          },
+          "centralSubscriptionId": {
+            "value": "[parameters('centralSentinelSubscriptionId')]"
+          },
+          "centralResourceGroup": {
+            "value": "[parameters('centralSentinelResourceGroup')]"
+          },
+          "centralWorkspace": {
+            "value": "[parameters('centralSentinelWorkspace')]"
           }
         }
       }

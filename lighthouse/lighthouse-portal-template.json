@@ -4,10 +4,46 @@
   "metadata": {
     "description": "Azure Lighthouse delegation for Multi-Tenant Sentinel incident sync"
   },
-  "parameters": {},
+  "parameters": {
+    "managingTenantId": {
+      "type": "string",
+      "defaultValue": "dcfeeacc-5825-4e13-8238-d7b052837b25",
+      "metadata": {
+        "description": "Tenant ID of the managing tenant (where Logic App is hosted)"
+      }
+    },
+    "logicAppManagedIdentityObjectId": {
+      "type": "string", 
+      "defaultValue": "81f2b226-a50a-4054-9bdb-b9657c2a390d",
+      "metadata": {
+        "description": "Object ID of the Logic App's managed identity"
+      }
+    },
+    "servicePrincipalDisplayName": {
+      "type": "string",
+      "defaultValue": "Sentinel Sync Logic App (Managed Identity)",
+      "metadata": {
+        "description": "Display name for the Logic App managed identity"
+      }
+    },
+    "offerName": {
+      "type": "string",
+      "defaultValue": "Multi-Tenant Sentinel Monitoring",
+      "metadata": {
+        "description": "Name of the managed service offer"
+      }
+    },
+    "offerDescription": {
+      "type": "string", 
+      "defaultValue": "Automated incident synchronization and centralized security monitoring for Microsoft Sentinel workspaces",
+      "metadata": {
+        "description": "Description of the managed service offer"
+      }
+    }
+  },
   "variables": {
-    "mspRegistrationName": "[guid('dcfeeacc-5825-4e13-8238-d7b052837b25')]",
-    "mspAssignmentName": "[guid('dcfeeacc-5825-4e13-8238-d7b052837b25', 'assignment')]"
+    "mspRegistrationName": "[guid(parameters('managingTenantId'))]",
+    "mspAssignmentName": "[guid(parameters('managingTenantId'), 'assignment')]"
   },
   "resources": [
     {
@@ -15,24 +51,24 @@
       "apiVersion": "2020-02-01-preview",
       "name": "[variables('mspRegistrationName')]",
       "properties": {
-        "registrationDefinitionName": "Multi-Tenant Sentinel Monitoring",
-        "description": "Automated incident synchronization and centralized security monitoring for Microsoft Sentinel workspaces",
-        "managedByTenantId": "dcfeeacc-5825-4e13-8238-d7b052837b25",
+        "registrationDefinitionName": "[parameters('offerName')]",
+        "description": "[parameters('offerDescription')]",
+        "managedByTenantId": "[parameters('managingTenantId')]",
         "authorizations": [
           {
-            "principalId": "81f2b226-a50a-4054-9bdb-b9657c2a390d",
-            "principalIdDisplayName": "Sentinel Sync Logic App (Managed Identity)",
-            "roleDefinitionId": "8e3af657-a8ff-443c-a75c-2fe8c4bcb635"
-          },
-          {
-            "principalId": "81f2b226-a50a-4054-9bdb-b9657c2a390d",
-            "principalIdDisplayName": "Sentinel Sync Logic App (Managed Identity)",
+            "principalId": "[parameters('logicAppManagedIdentityObjectId')]",
+            "principalIdDisplayName": "[parameters('servicePrincipalDisplayName')]",
             "roleDefinitionId": "ab8e14d6-4a74-4a29-9ba8-549422addade"
           },
           {
-            "principalId": "81f2b226-a50a-4054-9bdb-b9657c2a390d",
-            "principalIdDisplayName": "Sentinel Sync Logic App (Managed Identity)",
+            "principalId": "[parameters('logicAppManagedIdentityObjectId')]",
+            "principalIdDisplayName": "[parameters('servicePrincipalDisplayName')]",
             "roleDefinitionId": "3e150937-b8fe-4cfb-8069-0eaf05ecd056"
+          },
+          {
+            "principalId": "[parameters('logicAppManagedIdentityObjectId')]",
+            "principalIdDisplayName": "[parameters('servicePrincipalDisplayName')]",
+            "roleDefinitionId": "acdd72a7-3385-48ef-bd42-f606fba81ae7"
           }
         ],
         "managedByTenantName": "Central Security Operations"
@@ -53,11 +89,19 @@
   "outputs": {
     "mspOfferName": {
       "type": "string",
-      "value": "Multi-Tenant Sentinel Monitoring"
+      "value": "[parameters('offerName')]"
     },
     "mspOfferDescription": {
       "type": "string", 
-      "value": "This offer enables automated incident synchronization between your Microsoft Sentinel workspace and our centralized security operations center."
+      "value": "[parameters('offerDescription')]"
+    },
+    "managingTenantId": {
+      "type": "string",
+      "value": "[parameters('managingTenantId')]"
+    },
+    "delegatedObjectId": {
+      "type": "string",
+      "value": "[parameters('logicAppManagedIdentityObjectId')]"
     }
   }
 }

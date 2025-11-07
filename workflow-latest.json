@@ -4,16 +4,39 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
       "remoteWorkspaces": {
-        "type": "Array"
+        "type": "Array",
+        "metadata": {
+          "description": "Array of remote Sentinel workspaces to sync incidents FROM"
+        },
+        "defaultValue": [
+          {
+            "name": "Remote Workspace 1",
+            "subscriptionId": "enter-subscription-id-here",
+            "resourceGroup": "enter-resource-group-here",
+            "workspace": "enter-workspace-name-here"
+          }
+        ]
       },
       "centralSubscriptionId": {
-        "type": "String"
+        "type": "String",
+        "metadata": {
+          "description": "Subscription ID of the central Sentinel workspace (where incidents are synced TO)"
+        },
+        "defaultValue": "enter-central-subscription-id-here"
       },
       "centralResourceGroup": {
-        "type": "String"
+        "type": "String", 
+        "metadata": {
+          "description": "Resource group name of the central Sentinel workspace"
+        },
+        "defaultValue": "enter-central-resource-group-here"
       },
       "centralWorkspace": {
-        "type": "String"
+        "type": "String",
+        "metadata": {
+          "description": "Name of the central Sentinel workspace"
+        },
+        "defaultValue": "enter-central-workspace-name-here"
       },
       "$connections": {
         "type": "Object",
@@ -177,27 +200,27 @@
     "remoteWorkspaces": {
       "value": [
         {
-          "name": "AutoLAW",
-          "subscriptionId": "7d727b43-c480-4637-9b2d-f53db5982220",
-          "resourceGroup": "autorg1",
-          "workspace": "AutoLAW"
+          "name": "REMOTE_WORKSPACE_1_NAME",
+          "subscriptionId": "YOUR_REMOTE_WORKSPACE_1_SUBSCRIPTION_ID",
+          "resourceGroup": "YOUR_REMOTE_WORKSPACE_1_RESOURCE_GROUP",
+          "workspace": "YOUR_REMOTE_WORKSPACE_1_NAME"
         },
         {
-          "name": "CustomerA",
-          "subscriptionId": "7d727b43-c480-4637-9b2d-f53db5982220",
-          "resourceGroup": "rg-uks-sentinel",
-          "workspace": "CustomerA"
+          "name": "REMOTE_WORKSPACE_2_NAME", 
+          "subscriptionId": "YOUR_REMOTE_WORKSPACE_2_SUBSCRIPTION_ID",
+          "resourceGroup": "YOUR_REMOTE_WORKSPACE_2_RESOURCE_GROUP",
+          "workspace": "YOUR_REMOTE_WORKSPACE_2_NAME"
         }
       ]
     },
     "centralSubscriptionId": {
-      "value": "7d727b43-c480-4637-9b2d-f53db5982220"
+      "value": "YOUR_CENTRAL_SUBSCRIPTION_ID"
     },
     "centralResourceGroup": {
-      "value": "rg-uks-sentinel"
+      "value": "YOUR_CENTRAL_RESOURCE_GROUP"
     },
     "centralWorkspace": {
-      "value": "logs-uks-sentinel"
+      "value": "YOUR_CENTRAL_WORKSPACE_NAME"
     },
     "$connections": {
       "value": {}

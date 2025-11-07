@@ -20,16 +20,16 @@
       "type": "array",
       "defaultValue": [
         {
-          "name": "AutoLAW",
-          "subscriptionId": "7d727b43-c480-4637-9b2d-f53db5982220",
-          "resourceGroup": "autorg1",
-          "workspace": "AutoLAW"
+          "name": "Remote Workspace 1",
+          "subscriptionId": "enter-subscription-id-here",
+          "resourceGroup": "enter-resource-group-here",
+          "workspace": "enter-workspace-name-here"
         },
         {
-          "name": "CustomerA",
-          "subscriptionId": "7d727b43-c480-4637-9b2d-f53db5982220",
-          "resourceGroup": "rg-uks-sentinel",
-          "workspace": "CustomerA"
+          "name": "Remote Workspace 2", 
+          "subscriptionId": "enter-subscription-id-here",
+          "resourceGroup": "enter-resource-group-here",
+          "workspace": "enter-workspace-name-here"
         }
       ],
       "metadata": {
@@ -38,21 +38,21 @@
     },
     "centralSubscriptionId": {
       "type": "string",
-      "defaultValue": "7d727b43-c480-4637-9b2d-f53db5982220",
+      "defaultValue": "enter-central-subscription-id-here",
       "metadata": {
-        "description": "Subscription ID of central Sentinel workspace"
+        "description": "Subscription ID of central Sentinel workspace (where incidents are synced TO)"
       }
     },
     "centralResourceGroup": {
       "type": "string",
-      "defaultValue": "rg-uks-sentinel",
+      "defaultValue": "enter-central-resource-group-here",
       "metadata": {
-        "description": "Resource group of central Sentinel workspace"
+        "description": "Resource group name of central Sentinel workspace"
       }
     },
     "centralWorkspace": {
       "type": "string",
-      "defaultValue": "logs-uks-sentinel",
+      "defaultValue": "enter-central-workspace-name-here",
       "metadata": {
         "description": "Name of central Sentinel workspace"
       }

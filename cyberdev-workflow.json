@@ -1,0 +1,244 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "contentVersion": "1.0.0.0",
+        "triggers": {
+            "Recurrence": {
+                "recurrence": {
+                    "frequency": "Minute",
+                    "interval": 5
+                },
+                "evaluatedRecurrence": {
+                    "frequency": "Minute",
+                    "interval": 5
+                },
+                "type": "Recurrence"
+            }
+        },
+        "actions": {
+            "For_each_remote_workspace": {
+                "foreach": "@parameters('remoteWorkspaces')",
+                "actions": {
+                    "Get_incidents_from_remote": {
+                        "runAfter": {},
+                        "type": "Http",
+                        "inputs": {
+                            "method": "GET",
+                            "uri": "https://management.azure.com/subscriptions/@{items('For_each_remote_workspace')['subscriptionId']}/resourceGroups/@{items('For_each_remote_workspace')['resourceGroup']}/providers/Microsoft.OperationalInsights/workspaces/@{items('For_each_remote_workspace')['workspace']}/providers/Microsoft.SecurityInsights/incidents?api-version=2023-02-01&$top=10&$orderby=properties/createdTimeUtc desc",
+                            "authentication": {
+                                "type": "ManagedServiceIdentity",
+                                "audience": "https://management.azure.com"
+                            }
+                        }
+                    },
+                    "Parse_incidents_response": {
+                        "runAfter": {
+                            "Get_incidents_from_remote": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "ParseJson",
+                        "inputs": {
+                            "content": "@body('Get_incidents_from_remote')",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "value": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "properties": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "title": {
+                                                            "type": "string"
+                                                        },
+                                                        "description": {
+                                                            "type": "string"
+                                                        },
+                                                        "severity": {
+                                                            "type": "string"
+                                                        },
+                                                        "status": {
+                                                            "type": "string"
+                                                        },
+                                                        "incidentNumber": {
+                                                            "type": "integer"
+                                                        },
+                                                        "incidentUrl": {
+                                                            "type": "string"
+                                                        },
+                                                        "createdTimeUtc": {
+                                                            "type": "string"
+                                                        },
+                                                        "lastActivityTimeUtc": {
+                                                            "type": "string"
+                                                        },
+                                                        "firstActivityTimeUtc": {
+                                                            "type": "string"
+                                                        },
+                                                        "additionalData": {
+                                                            "type": "object"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "For_each_incident": {
+                        "foreach": "@body('Parse_incidents_response')?['value']",
+                        "actions": {
+                            "Check_if_already_synced": {
+                                "actions": {
+                                    "Create_incident_in_central": {
+                                        "runAfter": {},
+                                        "type": "Http",
+                                        "inputs": {
+                                            "method": "PUT",
+                                            "uri": "https://management.azure.com/subscriptions/@{parameters('centralSubscriptionId')}/resourceGroups/@{parameters('centralResourceGroup')}/providers/Microsoft.OperationalInsights/workspaces/@{parameters('centralWorkspace')}/providers/Microsoft.SecurityInsights/incidents/@{guid()}?api-version=2023-02-01",
+                                            "authentication": {
+                                                "type": "ManagedServiceIdentity",
+                                                "audience": "https://management.azure.com"
+                                            },
+                                            "body": {
+                                                "properties": {
+                                                    "title": "[SYNCED] @{items('For_each_incident')?['properties']?['title']} - @{items('For_each_remote_workspace')['name']}",
+                                                    "description": "# 🔗 Source Information\n**Source Workspace:** @{items('For_each_remote_workspace')['name']}\n**Original Incident #:** @{items('For_each_incident')?['properties']?['incidentNumber']}\n**Original Incident ID:** @{items('For_each_incident')?['name']}\n**Source Portal Link:** @{items('For_each_incident')?['properties']?['incidentUrl']}\n**Provider:** @{coalesce(items('For_each_incident')?['properties']?['providerName'], 'Azure Sentinel')}\n\n# 📊 Incident Timeline\n**Created:** @{items('For_each_incident')?['properties']?['createdTimeUtc']}\n**First Activity:** @{coalesce(items('For_each_incident')?['properties']?['firstActivityTimeUtc'], 'N/A')}\n**Last Activity:** @{coalesce(items('For_each_incident')?['properties']?['lastActivityTimeUtc'], 'N/A')}\n\n# 🎯 MITRE ATT&CK Tactics\n@{if(empty(items('For_each_incident')?['properties']?['additionalData']?['tactics']), 'No tactics identified', join(items('For_each_incident')?['properties']?['additionalData']?['tactics'], ', '))}\n\n# 🚨 Alert Details\n**Alert Count:** @{coalesce(string(items('For_each_incident')?['properties']?['additionalData']?['alertsCount']), '0')}\n**Alert Products:** @{if(empty(items('For_each_incident')?['properties']?['additionalData']?['alertProductNames']), 'N/A', join(items('For_each_incident')?['properties']?['additionalData']?['alertProductNames'], ', '))}\n\n---\n\n# 📝 Original Description\n@{coalesce(items('For_each_incident')?['properties']?['description'], 'No description available')}\n\n---\n\n💡 **View full details including entities in the source incident using the portal link above.**",
+                                                    "severity": "@{items('For_each_incident')?['properties']?['severity']}",
+                                                    "status": "New",
+                                                    "firstActivityTimeUtc": "@{items('For_each_incident')?['properties']?['firstActivityTimeUtc']}",
+                                                    "lastActivityTimeUtc": "@{items('For_each_incident')?['properties']?['lastActivityTimeUtc']}"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "runAfter": {},
+                                "expression": {
+                                    "and": [
+                                        {
+                                            "not": {
+                                                "startsWith": [
+                                                    "@items('For_each_incident')?['properties']?['title']",
+                                                    "[SYNCED]"
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                },
+                                "type": "If"
+                            }
+                        },
+                        "runAfter": {
+                            "Parse_incidents_response": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "Foreach",
+                        "runtimeConfiguration": {
+                            "concurrency": {
+                                "repetitions": 20
+                            }
+                        }
+                    }
+                },
+                "runAfter": {},
+                "type": "Foreach"
+            }
+        },
+        "outputs": {},
+        "parameters": {
+            "remoteWorkspaces": {
+                "type": "Array",
+                "metadata": {
+                    "description": "Array of remote Sentinel workspaces to sync incidents FROM (include tenantId for cross-tenant access)"
+                },
+                "defaultValue": [
+                    {
+                        "name": "AutoLAW",
+                        "subscriptionId": "7d727b43-c480-4637-9b2d-f53db5982220",
+                        "resourceGroup": "autorg1",
+                        "workspace": "AutoLAW",
+                        "tenantId": "enter-tenant-id-here"
+                    },
+                    {
+                        "name": "CustomerA",
+                        "subscriptionId": "7d727b43-c480-4637-9b2d-f53db5982220",
+                        "resourceGroup": "rg-uks-sentinel",
+                        "workspace": "CustomerA",
+                        "tenantId": "enter-tenant-id-here"
+                    }
+                ]
+            },
+            "centralSubscriptionId": {
+                "type": "String",
+                "metadata": {
+                    "description": "Subscription ID of the central Sentinel workspace (where incidents are synced TO)"
+                },
+                "defaultValue": "7d727b43-c480-4637-9b2d-f53db5982220"
+            },
+            "centralResourceGroup": {
+                "type": "String",
+                "metadata": {
+                    "description": "Resource group name of the central Sentinel workspace"
+                },
+                "defaultValue": "rg-uks-sentinel"
+            },
+            "centralWorkspace": {
+                "type": "String",
+                "metadata": {
+                    "description": "Name of the central Sentinel workspace"
+                },
+                "defaultValue": "logs-uks-sentinel"
+            },
+            "$connections": {
+                "type": "Object",
+                "defaultValue": {}
+            }
+        }
+    },
+    "parameters": {
+        "remoteWorkspaces": {
+            "value": [
+                {
+                    "name": "AutoLAW",
+                    "subscriptionId": "7d727b43-c480-4637-9b2d-f53db5982220",
+                    "resourceGroup": "autorg1",
+                    "workspace": "AutoLAW",
+                    "tenantId": "ENTER_AUTOLAW_TENANT_ID_HERE"
+                },
+                {
+                    "name": "CustomerA",
+                    "subscriptionId": "7d727b43-c480-4637-9b2d-f53db5982220",
+                    "resourceGroup": "rg-uks-sentinel",
+                    "workspace": "CustomerA",
+                    "tenantId": "ENTER_CUSTOMERA_TENANT_ID_HERE"
+                }
+            ]
+        },
+        "centralSubscriptionId": {
+            "value": "7d727b43-c480-4637-9b2d-f53db5982220"
+        },
+        "centralResourceGroup": {
+            "value": "rg-uks-sentinel"
+        },
+        "centralWorkspace": {
+            "value": "logs-uks-sentinel"
+        },
+        "$connections": {
+            "type": "Object",
+            "value": {}
+        }
+    }
+}

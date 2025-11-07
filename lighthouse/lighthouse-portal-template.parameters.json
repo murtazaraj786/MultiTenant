@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "managingTenantId": {
+      "value": "dcfeeacc-5825-4e13-8238-d7b052837b25"
+    },
+    "logicAppManagedIdentityObjectId": {
+      "value": "81f2b226-a50a-4054-9bdb-b9657c2a390d"
+    },
+    "servicePrincipalDisplayName": {
+      "value": "Sentinel Sync Logic App (Managed Identity)"
+    },
+    "offerName": {
+      "value": "Multi-Tenant Sentinel Monitoring"
+    },
+    "offerDescription": {
+      "value": "Automated incident synchronization and centralized security monitoring for Microsoft Sentinel workspaces. This service enables cross-tenant security incident visibility and centralized SOC operations."
+    }
+  }
+}

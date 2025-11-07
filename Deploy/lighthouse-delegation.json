@@ -1,0 +1,112 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "description": "Azure Lighthouse delegation template for Multi-Tenant Sentinel incident sync Logic App"
+  },
+  "parameters": {
+    "managingTenantId": {
+      "type": "string",
+      "defaultValue": "dcfeeacc-5825-4e13-8238-d7b052837b25",
+      "metadata": {
+        "description": "Tenant ID of the managing tenant (where Logic App is hosted)"
+      }
+    },
+    "managingTenantDisplayName": {
+      "type": "string",
+      "defaultValue": "Central Security Operations",
+      "metadata": {
+        "description": "Display name for the managing tenant"
+      }
+    },
+    "offerName": {
+      "type": "string",
+      "defaultValue": "Multi-Tenant Sentinel Monitoring",
+      "metadata": {
+        "description": "Name of the managed service offer"
+      }
+    },
+    "offerDescription": {
+      "type": "string",
+      "defaultValue": "Automated incident synchronization and centralized security monitoring for Microsoft Sentinel workspaces",
+      "metadata": {
+        "description": "Description of the managed service"
+      }
+    }
+  },
+  "variables": {
+    "mspRegistrationName": "[guid(parameters('managingTenantId'))]",
+    "mspAssignmentName": "[guid(parameters('managingTenantId'), 'assignment')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ManagedServices/registrationDefinitions",
+      "apiVersion": "2020-02-01-preview",
+      "name": "[variables('mspRegistrationName')]",
+      "properties": {
+        "registrationDefinitionName": "[parameters('offerName')]",
+        "description": "[parameters('offerDescription')]",
+        "managedByTenantId": "[parameters('managingTenantId')]",
+        "authorizations": [
+          {
+            "principalId": "81f2b226-a50a-4054-9bdb-b9657c2a390d",
+            "principalIdDisplayName": "Sentinel Sync Logic App (Managed Identity)",
+            "roleDefinitionId": "8e3af657-a8ff-443c-a75c-2fe8c4bcb635",
+            "delegatedRoleDefinitionIds": []
+          },
+          {
+            "principalId": "81f2b226-a50a-4054-9bdb-b9657c2a390d",
+            "principalIdDisplayName": "Sentinel Sync Logic App (Managed Identity)",
+            "roleDefinitionId": "ab8e14d6-4a74-4a29-9ba8-549422addade",
+            "delegatedRoleDefinitionIds": []
+          },
+          {
+            "principalId": "81f2b226-a50a-4054-9bdb-b9657c2a390d",
+            "principalIdDisplayName": "Sentinel Sync Logic App (Managed Identity)",
+            "roleDefinitionId": "3e150937-b8fe-4cfb-8069-0eaf05ecd056",
+            "delegatedRoleDefinitionIds": []
+          }
+        ],
+        "eligibleAuthorizations": [],
+        "managedByTenantName": "[parameters('managingTenantDisplayName')]"
+      }
+    },
+    {
+      "type": "Microsoft.ManagedServices/registrationAssignments",
+      "apiVersion": "2020-02-01-preview",
+      "name": "[variables('mspAssignmentName')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedServices/registrationDefinitions/', variables('mspRegistrationName'))]"
+      ],
+      "properties": {
+        "registrationDefinitionId": "[resourceId('Microsoft.ManagedServices/registrationDefinitions/', variables('mspRegistrationName'))]"
+      }
+    }
+  ],
+  "outputs": {
+    "registrationDefinitionId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.ManagedServices/registrationDefinitions/', variables('mspRegistrationName'))]"
+    },
+    "assignmentId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.ManagedServices/registrationAssignments/', variables('mspAssignmentName'))]"
+    },
+    "managedByTenantId": {
+      "type": "string",
+      "value": "[parameters('managingTenantId')]"
+    },
+    "logicAppManagedIdentity": {
+      "type": "object",
+      "value": {
+        "objectId": "81f2b226-a50a-4054-9bdb-b9657c2a390d",
+        "applicationId": "a1a3c76e-3703-4b2f-813f-fc3469237773",
+        "roles": [
+          "Owner",
+          "Microsoft Sentinel Reader", 
+          "Microsoft Sentinel Responder"
+        ]
+      }
+    }
+  }
+}

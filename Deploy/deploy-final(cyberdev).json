@@ -104,6 +104,10 @@
             },
             "centralWorkspace": {
               "type": "String"
+            },
+            "$connections": {
+              "type": "Object",
+              "defaultValue": {}
             }
           },
           "triggers": {
@@ -124,7 +128,7 @@
                   "type": "Http",
                   "inputs": {
                     "method": "GET",
-                    "uri": "@{concat('https://management.azure.com/subscriptions/', items('For_each_remote_workspace')['subscriptionId'], '/resourceGroups/', items('For_each_remote_workspace')['resourceGroup'], '/providers/Microsoft.OperationalInsights/workspaces/', items('For_each_remote_workspace')['workspace'], '/providers/Microsoft.SecurityInsights/incidents?api-version=2023-02-01&$top=10&$orderby=properties/createdTimeUtc desc')}",
+                    "uri": "https://management.azure.com/subscriptions/@{items('For_each_remote_workspace')['subscriptionId']}/resourceGroups/@{items('For_each_remote_workspace')['resourceGroup']}/providers/Microsoft.OperationalInsights/workspaces/@{items('For_each_remote_workspace')['workspace']}/providers/Microsoft.SecurityInsights/incidents?api-version=2023-02-01&$top=10&$orderby=properties/createdTimeUtc desc",
                     "authentication": {
                       "type": "ManagedServiceIdentity",
                       "audience": "https://management.azure.com"
@@ -172,6 +176,9 @@
                                   "incidentNumber": {
                                     "type": "integer"
                                   },
+                                  "incidentUrl": {
+                                    "type": "string"
+                                  },
                                   "createdTimeUtc": {
                                     "type": "string"
                                   },
@@ -180,6 +187,9 @@
                                   },
                                   "firstActivityTimeUtc": {
                                     "type": "string"
+                                  },
+                                  "additionalData": {
+                                    "type": "object"
                                   }
                                 }
                               }
@@ -192,23 +202,48 @@
                 },
                 "For_each_incident": {
                   "foreach": "@body('Parse_incidents_response')?['value']",
+                  "runtimeConfiguration": {
+                    "concurrency": {
+                      "repetitions": 20
+                    }
+                  },
                   "actions": {
-                    "Create_incident_in_central": {
+                    "Check_if_already_synced": {
                       "runAfter": {},
-                      "type": "Http",
-                      "inputs": {
-                        "method": "PUT",
-                        "uri": "@{concat('https://management.azure.com/subscriptions/', parameters('centralSubscriptionId'), '/resourceGroups/', parameters('centralResourceGroup'), '/providers/Microsoft.OperationalInsights/workspaces/', parameters('centralWorkspace'), '/providers/Microsoft.SecurityInsights/incidents/', guid(), '?api-version=2023-02-01')}",
-                        "authentication": {
-                          "type": "ManagedServiceIdentity",
-                          "audience": "https://management.azure.com"
-                        },
-                        "body": {
-                          "properties": {
-                            "title": "@{concat('[SYNCED] ', items('For_each_incident')?['properties']?['title'], ' - ', items('For_each_remote_workspace')['name'])}",
-                            "description": "@{concat('**Source Workspace:** ', items('For_each_remote_workspace')['name'], '\n**Original Incident Number:** ', items('For_each_incident')?['properties']?['incidentNumber'], '\n**Original Incident ID:** ', items('For_each_incident')?['name'], '\n**Created:** ', items('For_each_incident')?['properties']?['createdTimeUtc'], '\n\n---\n\n', items('For_each_incident')?['properties']?['description'])}",
-                            "severity": "@{items('For_each_incident')?['properties']?['severity']}",
-                            "status": "New"
+                      "type": "If",
+                      "expression": {
+                        "and": [
+                          {
+                            "not": {
+                              "startsWith": [
+                                "@items('For_each_incident')?['properties']?['title']",
+                                "[SYNCED]"
+                              ]
+                            }
+                          }
+                        ]
+                      },
+                      "actions": {
+                        "Create_incident_in_central": {
+                          "runAfter": {},
+                          "type": "Http",
+                          "inputs": {
+                            "method": "PUT",
+                            "uri": "https://management.azure.com/subscriptions/@{parameters('centralSubscriptionId')}/resourceGroups/@{parameters('centralResourceGroup')}/providers/Microsoft.OperationalInsights/workspaces/@{parameters('centralWorkspace')}/providers/Microsoft.SecurityInsights/incidents/@{guid()}?api-version=2023-02-01",
+                            "authentication": {
+                              "type": "ManagedServiceIdentity",
+                              "audience": "https://management.azure.com"
+                            },
+                            "body": {
+                              "properties": {
+                                "title": "[SYNCED] @{items('For_each_incident')?['properties']?['title']} - @{items('For_each_remote_workspace')['name']}",
+                                "description": "# 🔗 Source Information\\n**Source Workspace:** @{items('For_each_remote_workspace')['name']}\\n**Original Incident #:** @{items('For_each_incident')?['properties']?['incidentNumber']}\\n**Original Incident ID:** @{items('For_each_incident')?['name']}\\n**Source Portal Link:** @{items('For_each_incident')?['properties']?['incidentUrl']}\\n**Provider:** @{coalesce(items('For_each_incident')?['properties']?['providerName'], 'Azure Sentinel')}\\n\\n# 📊 Incident Timeline\\n**Created:** @{items('For_each_incident')?['properties']?['createdTimeUtc']}\\n**First Activity:** @{coalesce(items('For_each_incident')?['properties']?['firstActivityTimeUtc'], 'N/A')}\\n**Last Activity:** @{coalesce(items('For_each_incident')?['properties']?['lastActivityTimeUtc'], 'N/A')}\\n\\n# 🎯 MITRE ATT&CK Tactics\\n@{if(empty(items('For_each_incident')?['properties']?['additionalData']?['tactics']), 'No tactics identified', join(items('For_each_incident')?['properties']?['additionalData']?['tactics'], ', '))}\\n\\n# 🚨 Alert Details\\n**Alert Count:** @{coalesce(string(items('For_each_incident')?['properties']?['additionalData']?['alertsCount']), '0')}\\n**Alert Products:** @{if(empty(items('For_each_incident')?['properties']?['additionalData']?['alertProductNames']), 'N/A', join(items('For_each_incident')?['properties']?['additionalData']?['alertProductNames'], ', '))}\\n\\n---\\n\\n# 📝 Original Description\\n@{coalesce(items('For_each_incident')?['properties']?['description'], 'No description available')}\\n\\n---\\n\\n💡 **View full details including entities in the source incident using the portal link above.**",
+                                "severity": "@{items('For_each_incident')?['properties']?['severity']}",
+                                "status": "New",
+                                "firstActivityTimeUtc": "@{items('For_each_incident')?['properties']?['firstActivityTimeUtc']}",
+                                "lastActivityTimeUtc": "@{items('For_each_incident')?['properties']?['lastActivityTimeUtc']}"
+                              }
+                            }
                           }
                         }
                       }
@@ -240,6 +275,9 @@
           },
           "centralWorkspace": {
             "value": "[parameters('centralWorkspace')]"
+          },
+          "$connections": {
+            "value": {}
           }
         }
       }
